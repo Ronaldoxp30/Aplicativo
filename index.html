@@ -175,10 +175,11 @@
       const falta = meta - total;
       const porcentagem = meta ? ((total / meta) * 100) : 0;
       const porcentagemFaltante = 100 - porcentagem;
+      const media = gainList.length ? total / gainList.length : 0;
 
       document.getElementById('monthSummary').innerText =
         `Meta: R$${meta.toFixed(2)} | Atingido: R$${total.toFixed(2)} | Falta: R$${falta.toFixed(2)} | ` +
-        `Faltam ${porcentagemFaltante.toFixed(1)}%`;
+        `Faltam ${porcentagemFaltante.toFixed(1)}% | Média diária: R$${media.toFixed(2)}`;
 
       renderChart(gainList);
     }
