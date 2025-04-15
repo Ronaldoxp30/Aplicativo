@@ -9,6 +9,8 @@
   <title>Controle de Ganhos</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&display=swap" rel="stylesheet">
   <style>
     * {
@@ -57,8 +59,11 @@
     }
     canvas {
       margin-top: 20px;
-      background: white;
+      background: transparent;
       border-radius: 10px;
+      max-width: 100%;
+      max-height: 300px;
+      display: block;
     }
     footer {
       text-align: center;
@@ -81,17 +86,21 @@
       margin: 5px;
     }
     .progress-bar {
-      background: #444;
-      border-radius: 10px;
-      overflow: hidden;
+      width: 100%;
       height: 20px;
+      border-radius: 10px;
+      background-color: #444;
+      overflow: hidden;
       margin-top: 10px;
+      position: relative;
     }
-    .progress {
+    .progress-fill {
       height: 100%;
-      background: #2ecc71;
-      width: 0%;
-      transition: width 0.5s;
+      transition: width 0.3s ease;
+      text-align: center;
+      line-height: 20px;
+      color: white;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -111,8 +120,10 @@
     <button onclick="finalizeMonth()">Finalizar Mês</button>
     <div class="gain-list" id="gainList"></div>
     <div class="month-summary" id="monthSummary"></div>
-    <div class="progress-bar"><div id="progress" class="progress"></div></div>
-    <canvas id="chart" width="400" height="200"></canvas>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill">0%</div>
+    </div>
+    <canvas id="chart"></canvas>
   </div>
 
   <div class="container tab" id="history">
@@ -198,7 +209,24 @@
         `Meta: R$${meta.toFixed(2)} | Atingido: R$${total.toFixed(2)} | Falta: R$${falta.toFixed(2)} | ` +
         `Faltam ${porcentagemFaltante.toFixed(1)}% | Média diária: R$${media.toFixed(2)}`;
 
-      document.getElementById('progress').style.width = `${Math.min(porcentagem, 100)}%`;
+      const progress = document.getElementById('progressFill');
+      const progressPercentage = Math.min(porcentagem, 100);
+
+      // Definir a cor com um degradê
+      progress.style.width = `${progressPercentage}%`;
+
+      if (progressPercentage < 50) {
+        progress.style.background = `linear-gradient(90deg, red, orange)`;
+      } else if (progressPercentage < 100) {
+        progress.style.background = `linear-gradient(90deg, yellow, orange)`;
+      } else {
+        progress.style.background = `linear-gradient(90deg, green, limegreen)`;
+      }
+
+      // Exibir a porcentagem dentro da barra
+      progress.innerText = `${progressPercentage.toFixed(1)}%`;
+
+      if (porcentagem >= 100) confetti();
       renderChart(gainList);
     }
 
@@ -253,6 +281,7 @@
           month.data.map(g => `${g.date} - R$${g.gain.toFixed(2)}`).join('<br>') +
           `<br><strong>Total: R$${total.toFixed(2)}</strong><br>` +
           `<button onclick="exportPDF(${idx})">Exportar PDF</button> ` +
+          `<button onclick="exportExcel(${idx})">Exportar Excel</button> ` +
           `<button onclick="deleteHistory(${idx})">Excluir</button>`;
         container.appendChild(div);
       });
@@ -270,15 +299,26 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       const month = monthHistory[index];
-      const total = month.data.reduce((sum, g) => sum + g.gain, 0);
-
-      doc.text(`Resumo do mês: ${month.month}`, 10, 10);
+      let y = 10;
+      doc.text(`Resumo do mês: ${month.month}`, 10, y);
+      y += 10;
+      let total = 0;
       month.data.forEach((g, i) => {
-        doc.text(`${g.date} - R$${g.gain.toFixed(2)}`, 10, 20 + (i * 10));
+        total += g.gain;
+        doc.text(`${g.date} - R$${g.gain.toFixed(2)}`, 10, y);
+        y += 10;
       });
-      doc.text(`Total: R$${total.toFixed(2)}`, 10, 20 + (month.data.length * 10) + 10);
-
+      doc.text(`Total: R$${total.toFixed(2)}`, 10, y);
       doc.save(`${month.month}.pdf`);
+    }
+
+    function exportExcel(index) {
+      const month = monthHistory[index];
+      const data = month.data.map(g => ({ Data: g.date, Ganho: g.gain }));
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Ganhos");
+      XLSX.writeFile(workbook, `${month.month}.xlsx`);
     }
 
     renderGains();
