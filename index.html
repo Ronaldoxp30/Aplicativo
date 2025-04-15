@@ -3,272 +3,285 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Controle de Ganhos</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&display=swap" rel="stylesheet">
-    <style>
-      * {
-        box-sizing: border-box;
-        font-family: 'Barlow Condensed', sans-serif;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        background: #1c1c1c;
-        color: #f1f1f1;
-      }
-      header {
-        background-color: #111;
-        padding: 20px;
-        text-align: center;
-        font-size: 24px;
-        color: #f1c40f;
-      }
-      .container {
-        padding: 20px;
-      }
-      input, button, select {
-        padding: 10px;
-        margin: 5px;
-        border: none;
-        border-radius: 8px;
-      }
-      input {
-        width: 150px;
-      }
-      button {
-        background-color: #f1c40f;
-        color: #111;
-        font-weight: bold;
-        cursor: pointer;
-      }
-      .gain-list, .month-summary, .historic-container {
-        margin-top: 20px;
-        padding: 10px;
-        background: #2c2c2c;
-        border-radius: 10px;
-      }
-      .gain-item, .month-record {
-        margin: 10px 0;
-      }
-      canvas {
-        margin-top: 20px;
-        background: white;
-        border-radius: 10px;
-      }
-      footer {
-        text-align: center;
-        margin-top: 40px;
-        padding: 10px;
-        background: #111;
-        color: #aaa;
-      }
-      .tab {
-        display: none;
-      }
-      .tab.active {
-        display: block;
-      }
-      nav {
-        text-align: center;
-        background: #333;
-      }
-      nav button {
-        margin: 5px;
-      }
-    </style>
-  </head>
-  <body>
-    <header>Controle de Ganhos</header>
-    <nav>
-      <button onclick="changeTab('main')">Principal</button>
-      <button onclick="changeTab('history')">Histórico</button>
-    </nav>
-    <div class="container tab active" id="main">
-      <input type="number" id="gain" placeholder="Valor ganho" />
-      <input type="date" id="date" />
-      <input type="number" id="meta" placeholder="Meta do mês" />
-      <input type="number" id="extraPercent" placeholder="% extra na meta" />
-      <button onclick="addGain()">Adicionar</button>
-      <button onclick="clearGains()">Limpar</button>
-      <button onclick="finalizeMonth()">Finalizar Mês</button>
-      <div class="gain-list" id="gainList"></div>
-      <div class="month-summary" id="monthSummary"></div>
-      <canvas id="chart" width="400" height="200"></canvas>
-    </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controle de Ganhos</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Barlow Condensed', sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #1c1c1c;
+      color: #f1f1f1;
+    }
+    header {
+      background-color: #111;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      color: #f1c40f;
+    }
+    .container {
+      padding: 20px;
+    }
+    input, button, select {
+      padding: 10px;
+      margin: 5px;
+      border: none;
+      border-radius: 8px;
+    }
+    input {
+      width: 150px;
+    }
+    button {
+      background-color: #f1c40f;
+      color: #111;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .gain-list, .month-summary, .historic-container {
+      margin-top: 20px;
+      padding: 10px;
+      background: #2c2c2c;
+      border-radius: 10px;
+    }
+    .gain-item, .month-record {
+      margin: 10px 0;
+    }
+    canvas {
+      margin-top: 20px;
+      background: white;
+      border-radius: 10px;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 10px;
+      background: #111;
+      color: #aaa;
+    }
+    .tab {
+      display: none;
+    }
+    .tab.active {
+      display: block;
+    }
+    nav {
+      text-align: center;
+      background: #333;
+    }
+    nav button {
+      margin: 5px;
+    }
+    .progress-bar {
+      background: #444;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 20px;
+      margin-top: 10px;
+    }
+    .progress {
+      height: 100%;
+      background: #2ecc71;
+      width: 0%;
+      transition: width 0.5s;
+    }
+  </style>
+</head>
+<body>
+  <header>Controle de Ganhos</header>
+  <nav>
+    <button onclick="changeTab('main')">Principal</button>
+    <button onclick="changeTab('history')">Histórico</button>
+  </nav>
+  <div class="container tab active" id="main">
+    <input type="number" id="gain" placeholder="Valor ganho" />
+    <input type="date" id="date" />
+    <input type="number" id="meta" placeholder="Meta do mês" />
+    <input type="number" id="extraPercent" placeholder="% extra na meta" />
+    <button onclick="addGain()">Adicionar</button>
+    <button onclick="clearGains()">Limpar</button>
+    <button onclick="finalizeMonth()">Finalizar Mês</button>
+    <div class="gain-list" id="gainList"></div>
+    <div class="month-summary" id="monthSummary"></div>
+    <div class="progress-bar"><div id="progress" class="progress"></div></div>
+    <canvas id="chart" width="400" height="200"></canvas>
+  </div>
 
-    <div class="container tab" id="history">
-      <div class="historic-container" id="historicContainer"></div>
-    </div>
+  <div class="container tab" id="history">
+    <div class="historic-container" id="historicContainer"></div>
+  </div>
 
-    <footer>Desenvolvido Por: Ronaldo Silva Dos Santos - 73 99116-1995</footer>
+  <footer>Desenvolvido Por: Ronaldo Silva Dos Santos - 73 99116-1995</footer>
 
-    <script>
-      const gainList = JSON.parse(localStorage.getItem('gainList')) || [];
-      const monthHistory = JSON.parse(localStorage.getItem('monthHistory')) || [];
+  <script>
+    const gainList = JSON.parse(localStorage.getItem('gainList')) || [];
+    const monthHistory = JSON.parse(localStorage.getItem('monthHistory')) || [];
 
-      function saveData() {
-        localStorage.setItem('gainList', JSON.stringify(gainList));
-        localStorage.setItem('monthHistory', JSON.stringify(monthHistory));
-      }
+    function saveData() {
+      localStorage.setItem('gainList', JSON.stringify(gainList));
+      localStorage.setItem('monthHistory', JSON.stringify(monthHistory));
+    }
 
-      function changeTab(tab) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById(tab).classList.add('active');
-        if (tab === 'history') renderHistory();
-      }
+    function changeTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+      if (tab === 'history') renderHistory();
+    }
 
-      function addGain() {
-        const gain = parseFloat(document.getElementById('gain').value);
-        const date = document.getElementById('date').value;
-        const meta = parseFloat(document.getElementById('meta').value);
-        const extra = parseFloat(document.getElementById('extraPercent').value || 0);
+    function addGain() {
+      const gain = parseFloat(document.getElementById('gain').value);
+      const date = document.getElementById('date').value;
+      const meta = parseFloat(document.getElementById('meta').value);
+      const extra = parseFloat(document.getElementById('extraPercent').value || 0);
 
-        if (!gain || !date || !meta) return alert('Preencha todos os campos.');
+      if (!gain || !date || !meta) return alert('Preencha todos os campos.');
 
-        const realMeta = meta + (meta * (extra / 100));
-        gainList.push({ gain, date, meta: realMeta });
+      const realMeta = meta + (meta * (extra / 100));
+      gainList.push({ gain, date, meta: realMeta });
+      saveData();
+      renderGains();
+    }
+
+    function deleteGain(index) {
+      if (confirm('Deseja remover este dia?')) {
+        gainList.splice(index, 1);
         saveData();
         renderGains();
       }
+    }
 
-      function deleteGain(index) {
-        if (confirm('Deseja remover este dia?')) {
-          gainList.splice(index, 1);
-          saveData();
-          renderGains();
-        }
-      }
-
-      function clearGains() {
-        if (confirm("Tem certeza que deseja apagar todos os dados?")) {
-          gainList.length = 0;
-          saveData();
-          renderGains();
-        }
-      }
-
-      function finalizeMonth() {
-        const month = prompt('Digite o nome do mês:');
-        if (!month) return;
-        monthHistory.push({ month, data: [...gainList] });
+    function clearGains() {
+      if (confirm("Tem certeza que deseja apagar todos os dados?")) {
         gainList.length = 0;
         saveData();
         renderGains();
-        alert('Mês finalizado e salvo no histórico.');
       }
+    }
 
-      function renderGains() {
-        const container = document.getElementById('gainList');
-        container.innerHTML = '';
-        let total = 0;
-        gainList.forEach(({ gain, date }, index) => {
-          total += gain;
-          const div = document.createElement('div');
-          div.className = 'gain-item';
-          div.innerHTML = `${date} - R$${gain} <button onclick="deleteGain(${index})">Excluir</button>`;
-          container.appendChild(div);
-        });
+    function finalizeMonth() {
+      const month = prompt('Digite o nome do mês:');
+      if (!month) return;
+      monthHistory.push({ month, data: [...gainList] });
+      gainList.length = 0;
+      saveData();
+      renderGains();
+      alert('Mês finalizado e salvo no histórico.');
+    }
 
-        const meta = gainList[0]?.meta || 0;
-        const falta = meta - total;
-        const porcentagem = meta ? ((total / meta) * 100) : 0;
-        const porcentagemFaltante = 100 - porcentagem;
-        const media = gainList.length ? total / gainList.length : 0;
+    function renderGains() {
+      const container = document.getElementById('gainList');
+      container.innerHTML = '';
+      let total = 0;
+      gainList.forEach(({ gain, date }, index) => {
+        total += gain;
+        const div = document.createElement('div');
+        div.className = 'gain-item';
+        div.innerHTML = `${date} - R$${gain.toFixed(2)} <button onclick="deleteGain(${index})">Excluir</button>`;
+        container.appendChild(div);
+      });
 
-        document.getElementById('monthSummary').innerText =
-          `Meta: R$${meta.toFixed(2)} | Atingido: R$${total.toFixed(2)} | Falta: R$${falta.toFixed(2)} | ` +
-          `Faltam ${porcentagemFaltante.toFixed(1)}% | Média diária: R$${media.toFixed(2)}`;
+      const meta = gainList[0]?.meta || 0;
+      const falta = meta - total;
+      const porcentagem = meta ? ((total / meta) * 100) : 0;
+      const porcentagemFaltante = 100 - porcentagem;
+      const media = gainList.length ? total / gainList.length : 0;
 
-        renderChart(gainList);
-      }
+      document.getElementById('monthSummary').innerText =
+        `Meta: R$${meta.toFixed(2)} | Atingido: R$${total.toFixed(2)} | Falta: R$${falta.toFixed(2)} | ` +
+        `Faltam ${porcentagemFaltante.toFixed(1)}% | Média diária: R$${media.toFixed(2)}`;
 
-      function renderChart(data) {
-        const ctx = document.getElementById('chart').getContext('2d');
-        if (window.myChart) window.myChart.destroy();
-        let acumulado = 0;
-        const acumuladoData = data.map(d => acumulado += d.gain);
+      document.getElementById('progress').style.width = `${Math.min(porcentagem, 100)}%`;
+      renderChart(gainList);
+    }
 
-        window.myChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: data.map(d => d.date),
-            datasets: [
-              {
-                label: 'Ganhos Diários',
-                data: data.map(d => d.gain),
-                backgroundColor: '#f1c40f',
-                borderColor: '#e67e22',
-                borderWidth: 2,
-              },
-              {
-                type: 'line',
-                label: 'Evolução',
-                data: acumuladoData,
-                borderColor: '#2ecc71',
-                borderWidth: 2,
-                fill: false,
-                tension: 0.1
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: {
-                beginAtZero: true
-              }
+    function renderChart(data) {
+      const ctx = document.getElementById('chart').getContext('2d');
+      if (window.myChart) window.myChart.destroy();
+      let acumulado = 0;
+      const acumuladoData = data.map(d => acumulado += d.gain);
+
+      window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.map(d => d.date),
+          datasets: [
+            {
+              label: 'Ganhos Diários',
+              data: data.map(d => d.gain),
+              backgroundColor: '#f1c40f',
+              borderColor: '#e67e22',
+              borderWidth: 2,
+            },
+            {
+              type: 'line',
+              label: 'Evolução',
+              data: acumuladoData,
+              borderColor: '#2ecc71',
+              borderWidth: 2,
+              fill: false,
+              tension: 0.1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true
             }
           }
-        });
-      }
-
-      function renderHistory() {
-        const container = document.getElementById('historicContainer');
-        container.innerHTML = '';
-        monthHistory.forEach((month, idx) => {
-          const div = document.createElement('div');
-          div.className = 'month-record';
-          div.innerHTML = `<strong>${month.month}</strong><br>` +
-            month.data.map(g => `${g.date} - R$${g.gain}`).join('<br>') +
-            `<br><button onclick="exportPDF(${idx})">Exportar PDF</button> ` +
-            `<button onclick="deleteHistory(${idx})">Excluir</button>`;
-          container.appendChild(div);
-        });
-      }
-
-      function deleteHistory(index) {
-        if (confirm("Deseja excluir este histórico?")) {
-          monthHistory.splice(index, 1);
-          saveData();
-          renderHistory();
         }
+      });
+    }
+
+    function renderHistory() {
+      const container = document.getElementById('historicContainer');
+      container.innerHTML = '';
+      monthHistory.forEach((month, idx) => {
+        const total = month.data.reduce((sum, g) => sum + g.gain, 0);
+        const div = document.createElement('div');
+        div.className = 'month-record';
+        div.innerHTML = `<strong>${month.month}</strong><br>` +
+          month.data.map(g => `${g.date} - R$${g.gain.toFixed(2)}`).join('<br>') +
+          `<br><strong>Total: R$${total.toFixed(2)}</strong><br>` +
+          `<button onclick="exportPDF(${idx})">Exportar PDF</button> ` +
+          `<button onclick="deleteHistory(${idx})">Excluir</button>`;
+        container.appendChild(div);
+      });
+    }
+
+    function deleteHistory(index) {
+      if (confirm("Deseja excluir este histórico?")) {
+        monthHistory.splice(index, 1);
+        saveData();
+        renderHistory();
       }
+    }
 
-      function exportPDF(index) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const month = monthHistory[index];
+    function exportPDF(index) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const month = monthHistory[index];
+      const total = month.data.reduce((sum, g) => sum + g.gain, 0);
 
-        doc.text(`Resumo do mês: ${month.month}`, 10, 10);
+      doc.text(`Resumo do mês: ${month.month}`, 10, 10);
+      month.data.forEach((g, i) => {
+        doc.text(`${g.date} - R$${g.gain.toFixed(2)}`, 10, 20 + (i * 10));
+      });
+      doc.text(`Total: R$${total.toFixed(2)}`, 10, 20 + (month.data.length * 10) + 10);
 
-        let total = 0;
-        month.data.forEach((g, i) => {
-          doc.text(`${g.date} - R$${g.gain.toFixed(2)}`, 10, 20 + (i * 10));
-          total += g.gain;
-        });
+      doc.save(`${month.month}.pdf`);
+    }
 
-        const finalY = 30 + (month.data.length * 10);
-        doc.text(`Total do mês: R$${total.toFixed(2)}`, 10, finalY);
-
-        doc.save(`${month.month}.pdf`);
-      }
-
-      renderGains();
-    </script>
-  </body>
+    renderGains();
+  </script>
+</body>
 </html>
