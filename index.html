@@ -140,195 +140,264 @@
   <footer>Desenvolvido Por: Ronaldo Silva Dos Santos - 73 99116-1995</footer>
 
   <script>
-    const gainList = JSON.parse(localStorage.getItem('gainList')) || [];
-    const monthHistory = JSON.parse(localStorage.getItem('monthHistory')) || [];
+  const gainList = JSON.parse(localStorage.getItem('gainList')) || [];
+  const custoList = JSON.parse(localStorage.getItem('custoList')) || [];
+  const monthHistory = JSON.parse(localStorage.getItem('monthHistory')) || [];
 
-    function saveData() {
-      localStorage.setItem('gainList', JSON.stringify(gainList));
-      localStorage.setItem('monthHistory', JSON.stringify(monthHistory));
-    }
+  function saveData() {
+    localStorage.setItem('gainList', JSON.stringify(gainList));
+    localStorage.setItem('custoList', JSON.stringify(custoList));
+    localStorage.setItem('monthHistory', JSON.stringify(monthHistory));
+  }
 
-    function changeTab(tab) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.getElementById(tab).classList.add('active');
-      if (tab === 'history') renderHistory();
-    }
+  function changeTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+    if (tab === 'history') renderHistory();
+  }
 
-    function addGain() {
-      const gain = parseFloat(document.getElementById('gain').value);
-      const date = document.getElementById('date').value;
-      const meta = parseFloat(document.getElementById('meta').value);
-      const extra = parseFloat(document.getElementById('extraPercent').value || 0);
+  function addGain() {
+    const gain = parseFloat(document.getElementById('gain').value);
+    const date = document.getElementById('date').value;
+    const meta = parseFloat(document.getElementById('meta').value);
+    const extra = parseFloat(document.getElementById('extraPercent').value || 0);
 
-      if (!gain || !date || !meta) return alert('Preencha todos os campos.');
+    if (!gain || !date || !meta) return alert('Preencha todos os campos.');
 
-      const realMeta = meta + (meta * (extra / 100));
-      gainList.push({ gain, date, meta: realMeta });
+    const realMeta = meta + (meta * (extra / 100));
+    gainList.push({ gain, date, meta: realMeta });
+    saveData();
+    renderGains();
+  }
+
+  function deleteGain(index) {
+    if (confirm('Deseja remover este dia?')) {
+      gainList.splice(index, 1);
       saveData();
       renderGains();
     }
+  }
 
-    function deleteGain(index) {
-      if (confirm('Deseja remover este dia?')) {
-        gainList.splice(index, 1);
-        saveData();
-        renderGains();
-      }
-    }
-
-    function clearGains() {
-      if (confirm("Tem certeza que deseja apagar todos os dados?")) {
-        gainList.length = 0;
-        saveData();
-        renderGains();
-      }
-    }
-
-    function finalizeMonth() {
-      const month = prompt('Digite o nome do mês:');
-      if (!month) return;
-      monthHistory.push({ month, data: [...gainList] });
+  function clearGains() {
+    if (confirm("Tem certeza que deseja apagar todos os dados?")) {
       gainList.length = 0;
+      custoList.length = 0;
       saveData();
       renderGains();
-      alert('Mês finalizado e salvo no histórico.');
+      renderCustos();
+    }
+  }
+
+  function finalizeMonth() {
+    const month = prompt('Digite o nome do mês:');
+    if (!month) return;
+    monthHistory.push({ month, data: [...gainList], custos: [...custoList] });
+    gainList.length = 0;
+    custoList.length = 0;
+    saveData();
+    renderGains();
+    renderCustos();
+    alert('Mês finalizado e salvo no histórico.');
+  }
+
+  function addCusto() {
+    const valor = parseFloat(document.getElementById('custo').value);
+    const data = document.getElementById('custoDate').value;
+
+    if (!valor || !data) return alert('Preencha todos os campos de custo.');
+
+    custoList.push({ valor, data });
+    saveData();
+    renderCustos();
+    renderGains();
+  }
+
+  function deleteCusto(index) {
+    if (confirm("Deseja remover este custo?")) {
+      custoList.splice(index, 1);
+      saveData();
+      renderCustos();
+      renderGains();
+    }
+  }
+
+  function renderCustos() {
+    const container = document.getElementById('custoList');
+    container.innerHTML = '<h3>Custos</h3>';
+    let totalCustos = 0;
+    custoList.forEach(({ valor, data }, index) => {
+      totalCustos += valor;
+      const div = document.createElement('div');
+      div.className = 'gain-item';
+      div.innerHTML = `${data} - R$${valor.toFixed(2)} <button onclick="deleteCusto(${index})">Excluir</button>`;
+      container.appendChild(div);
+    });
+    if (custoList.length > 0) {
+      const totalDiv = document.createElement('div');
+      totalDiv.style.marginTop = '10px';
+      totalDiv.innerHTML = `<strong>Total de Custos: R$${totalCustos.toFixed(2)}</strong>`;
+      container.appendChild(totalDiv);
+    }
+  }
+
+  function renderGains() {
+    const container = document.getElementById('gainList');
+    container.innerHTML = '<h3>Ganhos</h3>';
+    let total = 0;
+    gainList.forEach(({ gain, date }, index) => {
+      total += gain;
+      const div = document.createElement('div');
+      div.className = 'gain-item';
+      div.innerHTML = `${date} - R$${gain.toFixed(2)} <button onclick="deleteGain(${index})">Excluir</button>`;
+      container.appendChild(div);
+    });
+
+    const totalCustos = custoList.reduce((sum, c) => sum + c.valor, 0);
+    const totalLiquido = total - totalCustos;
+
+    const meta = gainList[0]?.meta || 0;
+    const falta = meta - totalLiquido;
+    const porcentagem = meta ? ((totalLiquido / meta) * 100) : 0;
+    const porcentagemFaltante = 100 - porcentagem;
+    const media = gainList.length ? totalLiquido / gainList.length : 0;
+
+    document.getElementById('monthSummary').innerText =
+      `Meta: R$${meta.toFixed(2)} | Atingido: R$${totalLiquido.toFixed(2)} | Falta: R$${falta.toFixed(2)} | ` +
+      `Faltam ${porcentagemFaltante.toFixed(1)}% | Média diária líquida: R$${media.toFixed(2)}`;
+
+    const progress = document.getElementById('progressFill');
+    const progressPercentage = Math.min(porcentagem, 100);
+    progress.style.width = `${progressPercentage}%`;
+
+    if (progressPercentage < 50) {
+      progress.style.background = `linear-gradient(90deg, red, orange)`;
+    } else if (progressPercentage < 100) {
+      progress.style.background = `linear-gradient(90deg, yellow, orange)`;
+    } else {
+      progress.style.background = `linear-gradient(90deg, green, limegreen)`;
     }
 
-    function renderGains() {
-      const container = document.getElementById('gainList');
-      container.innerHTML = '';
-      let total = 0;
-      gainList.forEach(({ gain, date }, index) => {
-        total += gain;
-        const div = document.createElement('div');
-        div.className = 'gain-item';
-        div.innerHTML = `${date} - R$${gain.toFixed(2)} <button onclick="deleteGain(${index})">Excluir</button>`;
-        container.appendChild(div);
-      });
+    progress.innerText = `${progressPercentage.toFixed(1)}%`;
 
-      const meta = gainList[0]?.meta || 0;
-      const falta = meta - total;
-      const porcentagem = meta ? ((total / meta) * 100) : 0;
-      const porcentagemFaltante = 100 - porcentagem;
-      const media = gainList.length ? total / gainList.length : 0;
+    if (porcentagem >= 100) confetti();
+    renderChart(gainList);
+  }
 
-      document.getElementById('monthSummary').innerText =
-        `Meta: R$${meta.toFixed(2)} | Atingido: R$${total.toFixed(2)} | Falta: R$${falta.toFixed(2)} | ` +
-        `Faltam ${porcentagemFaltante.toFixed(1)}% | Média diária: R$${media.toFixed(2)}`;
+  function renderChart(data) {
+    const ctx = document.getElementById('chart').getContext('2d');
+    if (window.myChart) window.myChart.destroy();
+    let acumulado = 0;
+    const acumuladoData = data.map(d => acumulado += d.gain);
 
-      const progress = document.getElementById('progressFill');
-      const progressPercentage = Math.min(porcentagem, 100);
-
-      // Definir a cor com um degradê
-      progress.style.width = `${progressPercentage}%`;
-
-      if (progressPercentage < 50) {
-        progress.style.background = `linear-gradient(90deg, red, orange)`;
-      } else if (progressPercentage < 100) {
-        progress.style.background = `linear-gradient(90deg, yellow, orange)`;
-      } else {
-        progress.style.background = `linear-gradient(90deg, green, limegreen)`;
-      }
-
-      // Exibir a porcentagem dentro da barra
-      progress.innerText = `${progressPercentage.toFixed(1)}%`;
-
-      if (porcentagem >= 100) confetti();
-      renderChart(gainList);
-    }
-
-    function renderChart(data) {
-      const ctx = document.getElementById('chart').getContext('2d');
-      if (window.myChart) window.myChart.destroy();
-      let acumulado = 0;
-      const acumuladoData = data.map(d => acumulado += d.gain);
-
-      window.myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: data.map(d => d.date),
-          datasets: [
-            {
-              label: 'Ganhos Diários',
-              data: data.map(d => d.gain),
-              backgroundColor: '#f1c40f',
-              borderColor: '#e67e22',
-              borderWidth: 2,
-            },
-            {
-              type: 'line',
-              label: 'Evolução',
-              data: acumuladoData,
-              borderColor: '#2ecc71',
-              borderWidth: 2,
-              fill: false,
-              tension: 0.1
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              beginAtZero: true
-            }
+    window.myChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.map(d => d.date),
+        datasets: [
+          {
+            label: 'Ganhos Diários',
+            data: data.map(d => d.gain),
+            backgroundColor: '#f1c40f',
+            borderColor: '#e67e22',
+            borderWidth: 2,
+          },
+          {
+            type: 'line',
+            label: 'Evolução',
+            data: acumuladoData,
+            borderColor: '#2ecc71',
+            borderWidth: 2,
+            fill: false,
+            tension: 0.1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
           }
         }
-      });
-    }
-
-    function renderHistory() {
-      const container = document.getElementById('historicContainer');
-      container.innerHTML = '';
-      monthHistory.forEach((month, idx) => {
-        const total = month.data.reduce((sum, g) => sum + g.gain, 0);
-        const div = document.createElement('div');
-        div.className = 'month-record';
-        div.innerHTML = `<strong>${month.month}</strong><br>` +
-          month.data.map(g => `${g.date} - R$${g.gain.toFixed(2)}`).join('<br>') +
-          `<br><strong>Total: R$${total.toFixed(2)}</strong><br>` +
-          `<button onclick="exportPDF(${idx})">Exportar PDF</button> ` +
-          `<button onclick="exportExcel(${idx})">Exportar Excel</button> ` +
-          `<button onclick="deleteHistory(${idx})">Excluir</button>`;
-        container.appendChild(div);
-      });
-    }
-
-    function deleteHistory(index) {
-      if (confirm("Deseja excluir este histórico?")) {
-        monthHistory.splice(index, 1);
-        saveData();
-        renderHistory();
       }
-    }
+    });
+  }
 
-    function exportPDF(index) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const month = monthHistory[index];
-      let y = 10;
-      doc.text(`Resumo do mês: ${month.month}`, 10, y);
+  function renderHistory() {
+    const container = document.getElementById('historicContainer');
+    container.innerHTML = '';
+    monthHistory.forEach((month, idx) => {
+      const totalGanhos = month.data.reduce((sum, g) => sum + g.gain, 0);
+      const totalCustos = (month.custos || []).reduce((sum, c) => sum + c.valor, 0);
+      const totalLiquido = totalGanhos - totalCustos;
+
+      const div = document.createElement('div');
+      div.className = 'month-record';
+      div.innerHTML = `<strong>${month.month}</strong><br>` +
+        month.data.map(g => `${g.date} - R$${g.gain.toFixed(2)}`).join('<br>') +
+        `<br><em>Custos:</em><br>` +
+        (month.custos || []).map(c => `${c.data} - R$${c.valor.toFixed(2)}`).join('<br>') +
+        `<br><strong>Total Líquido: R$${totalLiquido.toFixed(2)}</strong><br>` +
+        `<button onclick="exportPDF(${idx})">Exportar PDF</button> ` +
+        `<button onclick="exportExcel(${idx})">Exportar Excel</button> ` +
+        `<button onclick="deleteHistory(${idx})">Excluir</button>`;
+      container.appendChild(div);
+    });
+  }
+
+  function deleteHistory(index) {
+    if (confirm("Deseja excluir este histórico?")) {
+      monthHistory.splice(index, 1);
+      saveData();
+      renderHistory();
+    }
+  }
+
+  function exportPDF(index) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const month = monthHistory[index];
+    let y = 10;
+    doc.text(`Resumo do mês: ${month.month}`, 10, y);
+    y += 10;
+
+    month.data.forEach(g => {
+      doc.text(`${g.date} - R$${g.gain.toFixed(2)}`, 10, y);
       y += 10;
-      let total = 0;
-      month.data.forEach((g, i) => {
-        total += g.gain;
-        doc.text(`${g.date} - R$${g.gain.toFixed(2)}`, 10, y);
+    });
+
+    if (month.custos?.length) {
+      y += 10;
+      doc.text('Custos:', 10, y);
+      y += 10;
+      month.custos.forEach(c => {
+        doc.text(`${c.data} - R$${c.valor.toFixed(2)}`, 10, y);
         y += 10;
       });
-      doc.text(`Total: R$${total.toFixed(2)}`, 10, y);
-      doc.save(`${month.month}.pdf`);
     }
 
-    function exportExcel(index) {
-      const month = monthHistory[index];
-      const data = month.data.map(g => ({ Data: g.date, Ganho: g.gain }));
-      const worksheet = XLSX.utils.json_to_sheet(data);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Ganhos");
-      XLSX.writeFile(workbook, `${month.month}.xlsx`);
-    }
+    const totalGanhos = month.data.reduce((sum, g) => sum + g.gain, 0);
+    const totalCustos = (month.custos || []).reduce((sum, c) => sum + c.valor, 0);
+    const totalLiquido = totalGanhos - totalCustos;
 
-    renderGains();
-  </script>
+    y += 10;
+    doc.text(`Total Líquido: R$${totalLiquido.toFixed(2)}`, 10, y);
+    doc.save(`${month.month}.pdf`);
+  }
+
+  function exportExcel(index) {
+    const month = monthHistory[index];
+    const ganhos = month.data.map(g => ({ Tipo: 'Ganho', Data: g.date, Valor: g.gain }));
+    const custos = (month.custos || []).map(c => ({ Tipo: 'Custo', Data: c.data, Valor: c.valor }));
+    const data = [...ganhos, ...custos];
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Resumo");
+    XLSX.writeFile(workbook, `${month.month}.xlsx`);
+  }
+
+  renderGains();
+  renderCustos();
+</script>
 </body>
 </html>
