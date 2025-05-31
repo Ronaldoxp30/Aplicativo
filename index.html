@@ -329,59 +329,6 @@
     }
 
     renderGains();
-    const gainList = JSON.parse(localStorage.getItem('gainList')) || [];
-const monthHistory = JSON.parse(localStorage.getItem('monthHistory')) || [];
-const custoList = JSON.parse(localStorage.getItem('custoList')) || [];
-function saveData() {
-  localStorage.setItem('gainList', JSON.stringify(gainList));
-  localStorage.setItem('monthHistory', JSON.stringify(monthHistory));
-  localStorage.setItem('custoList', JSON.stringify(custoList));
-}
-function addCusto() {
-  const valor = parseFloat(document.getElementById('custo').value);
-  const data = document.getElementById('custoDate').value;
-
-  if (!valor || !data) return alert('Preencha valor e data.');
-
-  custoList.push({ valor, data });
-  saveData();
-  renderGains();
-}
-// Total de custos
-const containerCusto = document.getElementById('custoList');
-containerCusto.innerHTML = '';
-let totalCustos = 0;
-
-custoList.forEach((item, index) => {
-  totalCustos += item.valor;
-  const div = document.createElement('div');
-  div.className = 'gain-item';
-  div.innerHTML = `${item.data} - R$${item.valor.toFixed(2)} <button onclick="deleteCusto(${index})">Excluir</button>`;
-  containerCusto.appendChild(div);
-});
-let total = 0;
-let total = 0;
-gainList.forEach(({ gain }) => total += gain);
-
-const meta = gainList[0]?.meta || 0;
-const liquido = total - totalCustos;
-const falta = meta - liquido;
-const porcentagem = meta ? ((liquido / meta) * 100) : 0;
-const porcentagemFaltante = 100 - porcentagem;
-const media = gainList.length ? liquido / gainList.length : 0;
-document.getElementById('monthSummary').innerText =
-  `Meta: R$${meta.toFixed(2)} | Ganhos: R$${total.toFixed(2)} | Custos: R$${totalCustos.toFixed(2)} | ` +
-  `Líquido: R$${liquido.toFixed(2)} | Falta: R$${falta.toFixed(2)} | ` +
-  `Faltam ${porcentagemFaltante.toFixed(1)}% | Média líquida diária: R$${media.toFixed(2)}`;
-function deleteCusto(index) {
-  if (confirm('Deseja remover este custo?')) {
-    custoList.splice(index, 1);
-    saveData();
-    renderGains();
-  }
-}
-custoList.length = 0;
-
   </script>
 </body>
 </html>
