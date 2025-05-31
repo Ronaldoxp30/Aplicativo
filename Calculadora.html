@@ -75,10 +75,20 @@
     .zero {
       grid-column: span 2;
     }
+    nav {
+      text-align: center;
+      background: #333;
+    }
+    nav button {
+      margin: 5px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <nav>
+        <button onclick="window.location.href='index.html'">Principal</button>
+    </nav>
     <h1>Calculadora</h1>
     <div class="calculator">
       <input type="text" id="display" disabled />
