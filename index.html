@@ -110,7 +110,6 @@
     <button onclick="changeTab('main')">Principal</button>
     <button onclick="changeTab('history')">Histórico</button>
     <button onclick="window.location.href='Calculadora.html'">Calculadora</button>
-
   </nav>
   <div class="container tab active" id="main">
     <input type="number" id="gain" placeholder="Valor ganho" />
@@ -120,10 +119,13 @@
     <button onclick="addGain()">Adicionar</button>
     <button onclick="clearGains()">Limpar</button>
     <button onclick="finalizeMonth()">Finalizar Mês</button>
+    
     <h3>Adicionar Custo</h3>
     <input type="number" id="custo" placeholder="Valor retirado" />
     <input type="date" id="custoDate" />
+    <input type="text" id="custoDesc" placeholder="Descrição do custo" />
     <button onclick="addCusto()">Adicionar Custo</button>
+    
     <div class="gain-list" id="custoList"></div>
     <div class="gain-list" id="gainList"></div>
     <div class="month-summary" id="monthSummary"></div>
@@ -203,10 +205,11 @@
   function addCusto() {
     const valor = parseFloat(document.getElementById('custo').value);
     const data = document.getElementById('custoDate').value;
+    const descricao = document.getElementById('custoDesc').value;
 
-    if (!valor || !data) return alert('Preencha todos os campos de custo.');
+    if (!valor || !data || !descricao) return alert('Preencha todos os campos de custo.');
 
-    custoList.push({ valor, data });
+    custoList.push({ valor, data, descricao });
     saveData();
     renderCustos();
     renderGains();
@@ -225,11 +228,12 @@
     const container = document.getElementById('custoList');
     container.innerHTML = '<h3>Custos</h3>';
     let totalCustos = 0;
-    custoList.forEach(({ valor, data }, index) => {
+    custoList.forEach(({ valor, data, descricao }, index) => {
       totalCustos += valor;
       const div = document.createElement('div');
       div.className = 'gain-item';
-      div.innerHTML = `${data} - R$${valor.toFixed(2)} <button onclick="deleteCusto(${index})">Excluir</button>`;
+      div.innerHTML = `${data} - R$${valor.toFixed(2)} - ${descricao} 
+        <button onclick="deleteCusto(${index})">Excluir</button>`;
       container.appendChild(div);
     });
     if (custoList.length > 0) {
@@ -248,7 +252,8 @@
       total += gain;
       const div = document.createElement('div');
       div.className = 'gain-item';
-      div.innerHTML = `${date} - R$${gain.toFixed(2)} <button onclick="deleteGain(${index})">Excluir</button>`;
+      div.innerHTML = `${date} - R$${gain.toFixed(2)} 
+        <button onclick="deleteGain(${index})">Excluir</button>`;
       container.appendChild(div);
     });
 
@@ -336,7 +341,7 @@
       div.innerHTML = `<strong>${month.month}</strong><br>` +
         month.data.map(g => `${g.date} - R$${g.gain.toFixed(2)}`).join('<br>') +
         `<br><em>Custos:</em><br>` +
-        (month.custos || []).map(c => `${c.data} - R$${c.valor.toFixed(2)}`).join('<br>') +
+        (month.custos || []).map(c => `${c.data} - R$${c.valor.toFixed(2)} - ${c.descricao}`).join('<br>') +
         `<br><strong>Total Líquido: R$${totalLiquido.toFixed(2)}</strong><br>` +
         `<button onclick="exportPDF(${idx})">Exportar PDF</button> ` +
         `<button onclick="exportExcel(${idx})">Exportar Excel</button> ` +
@@ -371,7 +376,7 @@
       doc.text('Custos:', 10, y);
       y += 10;
       month.custos.forEach(c => {
-        doc.text(`${c.data} - R$${c.valor.toFixed(2)}`, 10, y);
+        doc.text(`${c.data} - R$${c.valor.toFixed(2)} - ${c.descricao}`, 10, y);
         y += 10;
       });
     }
@@ -388,7 +393,7 @@
   function exportExcel(index) {
     const month = monthHistory[index];
     const ganhos = month.data.map(g => ({ Tipo: 'Ganho', Data: g.date, Valor: g.gain }));
-    const custos = (month.custos || []).map(c => ({ Tipo: 'Custo', Data: c.data, Valor: c.valor }));
+    const custos = (month.custos || []).map(c => ({ Tipo: 'Custo', Data: c.data, Valor: c.valor, Descricao: c.descricao }));
     const data = [...ganhos, ...custos];
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
@@ -398,6 +403,6 @@
 
   renderGains();
   renderCustos();
-</script>
+  </script>
 </body>
 </html>
