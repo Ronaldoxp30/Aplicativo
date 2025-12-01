@@ -111,9 +111,11 @@
     <button onclick="changeTab('history')">Histórico</button>
     <button onclick="window.location.href='Calculadora.html'">Calculadora</button>
   </nav>
+
   <div class="container tab active" id="main">
     <input type="number" id="gain" placeholder="Valor ganho" />
     <input type="date" id="date" />
+    <input type="text" id="gainDesc" placeholder="Descrição do serviço" />
     <input type="number" id="meta" placeholder="Meta do mês" />
     <input type="number" id="extraPercent" placeholder="% extra na meta" />
     <button onclick="addGain()">Adicionar</button>
@@ -129,9 +131,11 @@
     <div class="gain-list" id="custoList"></div>
     <div class="gain-list" id="gainList"></div>
     <div class="month-summary" id="monthSummary"></div>
+    
     <div class="progress-bar">
       <div class="progress-fill" id="progressFill">0%</div>
     </div>
+
     <canvas id="chart"></canvas>
   </div>
 
@@ -161,15 +165,21 @@
   function addGain() {
     const gain = parseFloat(document.getElementById('gain').value);
     const date = document.getElementById('date').value;
+    const desc = document.getElementById('gainDesc').value;
     const meta = parseFloat(document.getElementById('meta').value);
     const extra = parseFloat(document.getElementById('extraPercent').value || 0);
 
-    if (!gain || !date || !meta) return alert('Preencha todos os campos.');
+    if (!gain || !date || !meta || !desc) 
+      return alert('Preencha todos os campos, incluindo a descrição.');
 
     const realMeta = meta + (meta * (extra / 100));
-    gainList.push({ gain, date, meta: realMeta });
+    gainList.push({ gain, date, desc, meta: realMeta });
+
     saveData();
     renderGains();
+
+    document.getElementById('gain').value = '';
+    document.getElementById('gainDesc').value = '';
   }
 
   function deleteGain(index) {
@@ -207,7 +217,8 @@
     const data = document.getElementById('custoDate').value;
     const descricao = document.getElementById('custoDesc').value;
 
-    if (!valor || !data || !descricao) return alert('Preencha todos os campos de custo.');
+    if (!valor || !data || !descricao) 
+      return alert('Preencha todos os campos de custo.');
 
     custoList.push({ valor, data, descricao });
     saveData();
@@ -228,6 +239,7 @@
     const container = document.getElementById('custoList');
     container.innerHTML = '<h3>Custos</h3>';
     let totalCustos = 0;
+
     custoList.forEach(({ valor, data, descricao }, index) => {
       totalCustos += valor;
       const div = document.createElement('div');
@@ -236,6 +248,7 @@
         <button onclick="deleteCusto(${index})">Excluir</button>`;
       container.appendChild(div);
     });
+
     if (custoList.length > 0) {
       const totalDiv = document.createElement('div');
       totalDiv.style.marginTop = '10px';
@@ -248,11 +261,12 @@
     const container = document.getElementById('gainList');
     container.innerHTML = '<h3>Ganhos</h3>';
     let total = 0;
-    gainList.forEach(({ gain, date }, index) => {
+
+    gainList.forEach(({ gain, date, desc }, index) => {
       total += gain;
       const div = document.createElement('div');
       div.className = 'gain-item';
-      div.innerHTML = `${date} - R$${gain.toFixed(2)} 
+      div.innerHTML = `${date} - R$${gain.toFixed(2)} - ${desc}
         <button onclick="deleteGain(${index})">Excluir</button>`;
       container.appendChild(div);
     });
@@ -291,6 +305,7 @@
   function renderChart(data) {
     const ctx = document.getElementById('chart').getContext('2d');
     if (window.myChart) window.myChart.destroy();
+
     let acumulado = 0;
     const acumuladoData = data.map(d => acumulado += d.gain);
 
@@ -331,6 +346,7 @@
   function renderHistory() {
     const container = document.getElementById('historicContainer');
     container.innerHTML = '';
+
     monthHistory.forEach((month, idx) => {
       const totalGanhos = month.data.reduce((sum, g) => sum + g.gain, 0);
       const totalCustos = (month.custos || []).reduce((sum, c) => sum + c.valor, 0);
@@ -339,7 +355,7 @@
       const div = document.createElement('div');
       div.className = 'month-record';
       div.innerHTML = `<strong>${month.month}</strong><br>` +
-        month.data.map(g => `${g.date} - R$${g.gain.toFixed(2)}`).join('<br>') +
+        month.data.map(g => `${g.date} - R$${g.gain.toFixed(2)} - ${g.desc}`).join('<br>') +
         `<br><em>Custos:</em><br>` +
         (month.custos || []).map(c => `${c.data} - R$${c.valor.toFixed(2)} - ${c.descricao}`).join('<br>') +
         `<br><strong>Total Líquido: R$${totalLiquido.toFixed(2)}</strong><br>` +
@@ -363,11 +379,12 @@
     const doc = new jsPDF();
     const month = monthHistory[index];
     let y = 10;
+
     doc.text(`Resumo do mês: ${month.month}`, 10, y);
     y += 10;
 
     month.data.forEach(g => {
-      doc.text(`${g.date} - R$${g.gain.toFixed(2)}`, 10, y);
+      doc.text(`${g.date} - R$${g.gain.toFixed(2)} - ${g.desc}`, 10, y);
       y += 10;
     });
 
@@ -392,9 +409,23 @@
 
   function exportExcel(index) {
     const month = monthHistory[index];
-    const ganhos = month.data.map(g => ({ Tipo: 'Ganho', Data: g.date, Valor: g.gain }));
-    const custos = (month.custos || []).map(c => ({ Tipo: 'Custo', Data: c.data, Valor: c.valor, Descricao: c.descricao }));
+
+    const ganhos = month.data.map(g => ({
+      Tipo: 'Ganho',
+      Data: g.date,
+      Valor: g.gain,
+      Descricao: g.desc
+    }));
+
+    const custos = (month.custos || []).map(c => ({
+      Tipo: 'Custo',
+      Data: c.data,
+      Valor: c.valor,
+      Descricao: c.descricao
+    }));
+
     const data = [...ganhos, ...custos];
+
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Resumo");
