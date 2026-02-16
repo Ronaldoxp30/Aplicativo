@@ -105,12 +105,27 @@
   </style>
 </head>
 <body>
+  <canvas id="pieChart"></canvas>
   <header>Controle de Ganhos</header>
   <nav>
     <button onclick="changeTab('main')">Principal</button>
     <button onclick="changeTab('history')">Histórico</button>
     <button onclick="window.location.href='Calculadora.html'">Calculadora</button>
   </nav>
+  <nav>
+  <button onclick="changeTab('gastos')">Gastos</button>
+  <button onclick="changeTab('analise')">Análises</button>
+  <button onclick="changeTab('history')">Histórico</button>
+</nav>
+<div class="container tab active" id="gastos">
+  <!-- ganhos + custos -->
+</div>
+<div class="container tab" id="analise">
+  <h2>Análise Financeira</h2>
+  <canvas id="chart"></canvas>
+  <canvas id="pieChart"></canvas>
+</div>
+
 
   <div class="container tab active" id="main">
     <input type="number" id="gain" placeholder="Valor ganho" />
@@ -123,6 +138,8 @@
     <button onclick="finalizeMonth()">Finalizar Mês</button>
     
     <h3>Adicionar Custo</h3>
+    <input type="text" id="custoCategoria" placeholder="Categoria (Ex: Alimentação)" />
+    <input type="text" id="custoDesc" placeholder="Descrição do custo (opcional)" />
     <input type="number" id="custo" placeholder="Valor retirado" />
     <input type="date" id="custoDate" />
     <input type="text" id="custoDesc" placeholder="Descrição do custo" />
@@ -216,6 +233,21 @@
     const valor = parseFloat(document.getElementById('custo').value);
     const data = document.getElementById('custoDate').value;
     const descricao = document.getElementById('custoDesc').value;
+     function addCusto() {
+  const valor = parseFloat(document.getElementById('custo').value);
+  const data = document.getElementById('custoDate').value;
+  const categoria = document.getElementById('custoCategoria').value;
+  const descricao = document.getElementById('custoDesc').value;
+
+  if (!valor || !data || !categoria) {
+    return alert('Preencha valor, data e categoria.');
+  }
+
+  custoList.push({ valor, data, categoria, descricao });
+  saveData();
+  renderCustos();
+  renderGains();
+}
 
     if (!valor || !data || !descricao) 
       return alert('Preencha todos os campos de custo.');
@@ -301,6 +333,52 @@
     if (porcentagem >= 100) confetti();
     renderChart(gainList);
   }
+function renderPieChart() {
+  const categorias = {};
+  
+  custoList.forEach(c => {
+    categorias[c.categoria] = (categorias[c.categoria] || 0) + c.valor;
+  });
+
+  const labels = Object.keys(categorias);
+  const data = Object.values(categorias);
+
+  const ctx = document.getElementById('pieChart').getContext('2d');
+  if (window.pieChart) window.pieChart.destroy();
+
+  window.pieChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: [
+          '#e74c3c','#3498db','#f1c40f',
+          '#2ecc71','#9b59b6','#e67e22'
+        ]
+      }]
+    }
+  });
+}
+renderPieChart();
+function renderResumoGastos() {
+  const resumo = {};
+  let total = 0;
+
+  custoList.forEach(c => {
+    resumo[c.categoria] = (resumo[c.categoria] || 0) + c.valor;
+    total += c.valor;
+  });
+
+  let texto = '📊 Resumo de Gastos:\n\n';
+  Object.keys(resumo).forEach(cat => {
+    const perc = ((resumo[cat] / total) * 100).toFixed(1);
+    texto += `${cat}: R$${resumo[cat].toFixed(2)} (${perc}%)\n`;
+  });
+
+  document.getElementById('monthSummary').innerText += '\n\n' + texto;
+}
+renderResumoGastos();
 
   function renderChart(data) {
     const ctx = document.getElementById('chart').getContext('2d');
