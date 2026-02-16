@@ -105,17 +105,12 @@
   </style>
 </head>
 <body>
-  <canvas id="pieChart"></canvas>
   <header>Controle de Ganhos</header>
   <nav>
     <button onclick="changeTab('main')">Principal</button>
     <button onclick="changeTab('history')">Histórico</button>
     <button onclick="window.location.href='Calculadora.html'">Calculadora</button>
   </nav>
-  <nav>
-  <button onclick="changeTab('gastos')">Gastos</button>
-  <button onclick="changeTab('analise')">Análises</button>
-</nav>
 <div class="container tab active" id="gastos">
   <!-- ganhos + custos -->
 </div>
@@ -332,53 +327,6 @@
     if (porcentagem >= 100) confetti();
     renderChart(gainList);
   }
-function renderPieChart() {
-  const categorias = {};
-  
-  custoList.forEach(c => {
-    categorias[c.categoria] = (categorias[c.categoria] || 0) + c.valor;
-  });
-
-  const labels = Object.keys(categorias);
-  const data = Object.values(categorias);
-
-  const ctx = document.getElementById('pieChart').getContext('2d');
-  if (window.pieChart) window.pieChart.destroy();
-
-  window.pieChart = new Chart(ctx, {
-    type: 'pie',
-    data: {
-      labels,
-      datasets: [{
-        data,
-        backgroundColor: [
-          '#e74c3c','#3498db','#f1c40f',
-          '#2ecc71','#9b59b6','#e67e22'
-        ]
-      }]
-    }
-  });
-}
-renderPieChart();
-function renderResumoGastos() {
-  const resumo = {};
-  let total = 0;
-
-  custoList.forEach(c => {
-    resumo[c.categoria] = (resumo[c.categoria] || 0) + c.valor;
-    total += c.valor;
-  });
-
-  let texto = '📊 Resumo de Gastos:\n\n';
-  Object.keys(resumo).forEach(cat => {
-    const perc = ((resumo[cat] / total) * 100).toFixed(1);
-    texto += `${cat}: R$${resumo[cat].toFixed(2)} (${perc}%)\n`;
-  });
-
-  document.getElementById('monthSummary').innerText += '\n\n' + texto;
-}
-renderResumoGastos();
-
   function renderChart(data) {
     const ctx = document.getElementById('chart').getContext('2d');
     if (window.myChart) window.myChart.destroy();
