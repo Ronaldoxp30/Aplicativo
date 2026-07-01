@@ -1,147 +1,148 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Calculadora</title>
-  <style>
-    body {
-      background-color: #121212;
-      font-family: Arial, sans-serif;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    .container {
-      text-align: center;
-    }
-
-    h1 {
-      color: #ffcc00;
-      margin-bottom: 20px;
-    }
-
-    .calculator {
-      background-color: #1e1e1e;
-      padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 0 10px #000;
-      width: 300px;
-    }
-
-    #display {
-      width: 100%;
-      height: 40px;
-      font-size: 1.5rem;
-      padding: 10px;
-      border: none;
-      border-radius: 10px;
-      background-color: #2a2a2a;
-      color: #fff;
-      text-align: right;
-      margin-bottom: 10px;
-    }
-
-    .buttons {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-    }
-
-    button {
-      background-color: #ffcc00;
-      border: none;
-      padding: 15px;
-      font-size: 1.2rem;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    button:hover {
-      background-color: #e6b800;
-    }
-
-    .equals {
-      grid-column: 4;
-      background-color: #28a745;
-      color: white;
-    }
-
-    .zero {
-      grid-column: span 2;
-    }
-    nav {
-      text-align: center;
-      background: #333;
-    }
-    nav button {
-      margin: 5px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Calculadora</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --tg-bg:#0E1621;
+    --tg-bg-2:#17212B;
+    --tg-card:#1E2C3A;
+    --tg-card-2:#24374A;
+    --tg-accent:#2AABEE;
+    --tg-gradient:linear-gradient(135deg,#2AABEE,#229ED9);
+    --tg-text:#F5F7FA;
+    --tg-text-dim:#8B98A5;
+    --tg-divider:#243342;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--tg-bg);
+    color:var(--tg-text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex;justify-content:center;align-items:center;min-height:100vh;
+  }
+  .wrap{width:100%;max-width:480px;padding:20px;}
+  .topbar{
+    background:var(--tg-gradient);
+    padding:16px 18px;border-radius:16px 16px 0 0;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .topbar-title{font-size:18px;font-weight:700;color:#fff;}
+  .icon-btn{
+    background:rgba(255,255,255,0.16);border:none;border-radius:50%;
+    width:34px;height:34px;color:#fff;font-size:15px;cursor:pointer;
+  }
+  .calc-body{
+    background:var(--tg-card);
+    border-radius:0 0 16px 16px;
+    padding:20px;
+  }
+  #display{
+    width:100%;height:56px;font-size:1.8rem;padding:0 14px;
+    border:1px solid var(--tg-divider);border-radius:14px;
+    background:var(--tg-bg-2);color:var(--tg-text);text-align:right;
+    margin-bottom:14px;
+  }
+  .buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  button.key{
+    background:var(--tg-card-2);color:var(--tg-text);border:none;
+    padding:18px 0;font-size:1.2rem;border-radius:14px;cursor:pointer;
+    transition:background .15s, transform .1s;
+  }
+  button.key:active{transform:scale(0.96);}
+  button.op{background:var(--tg-gradient);color:#fff;}
+  button.clear{background:rgba(241,85,76,0.16);color:#F1554C;}
+  button.equals{grid-column:span 2;background:var(--tg-gradient);color:#fff;font-weight:700;}
+  button.zero{grid-column:span 2;}
+  .lock-msg{
+    display:none;text-align:center;color:var(--tg-text-dim);
+    padding:30px 10px;font-size:14px;
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <nav>
-        <button onclick="window.location.href='index.html'">Principal</button>
-    </nav>
-    <h1>Calculadora</h1>
-    <div class="calculator">
-      <input type="text" id="display" disabled />
-      <div class="buttons">
-        <button onclick="clearDisplay()">C</button>
-        <button onclick="appendValue('/')">/</button>
-        <button onclick="appendValue('*')">*</button>
-        <button onclick="deleteLast()">⌫</button>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="topbar-title">Calculadora</div>
+      <button class="icon-btn" onclick="window.location.href='index.html'">←</button>
+    </div>
+    <div class="calc-body">
+      <div id="lockMsg" class="lock-msg">Você precisa entrar na sua conta para usar a calculadora.<br><br>
+        <button class="key op" style="padding:12px 20px;" onclick="window.location.href='index.html'">Ir para o login</button>
+      </div>
 
-        <button onclick="appendValue('7')">7</button>
-        <button onclick="appendValue('8')">8</button>
-        <button onclick="appendValue('9')">9</button>
-        <button onclick="appendValue('-')">-</button>
+      <div id="calcContent">
+        <input type="text" id="display" disabled />
+        <div class="buttons">
+          <button class="key clear" onclick="clearDisplay()">C</button>
+          <button class="key op" onclick="appendValue('/')">÷</button>
+          <button class="key op" onclick="appendValue('*')">×</button>
+          <button class="key clear" onclick="deleteLast()">⌫</button>
 
-        <button onclick="appendValue('4')">4</button>
-        <button onclick="appendValue('5')">5</button>
-        <button onclick="appendValue('6')">6</button>
-        <button onclick="appendValue('+')">+</button>
+          <button class="key" onclick="appendValue('7')">7</button>
+          <button class="key" onclick="appendValue('8')">8</button>
+          <button class="key" onclick="appendValue('9')">9</button>
+          <button class="key op" onclick="appendValue('-')">−</button>
 
-        <button onclick="appendValue('1')">1</button>
-        <button onclick="appendValue('2')">2</button>
-        <button onclick="appendValue('3')">3</button>
-        <button onclick="calculate()" class="equals">=</button>
+          <button class="key" onclick="appendValue('4')">4</button>
+          <button class="key" onclick="appendValue('5')">5</button>
+          <button class="key" onclick="appendValue('6')">6</button>
+          <button class="key op" onclick="appendValue('+')">+</button>
 
-        <button onclick="appendValue('0')" class="zero">0</button>
-        <button onclick="appendValue('.')">.</button>
+          <button class="key" onclick="appendValue('1')">1</button>
+          <button class="key" onclick="appendValue('2')">2</button>
+          <button class="key" onclick="appendValue('3')">3</button>
+          <button class="key equals" onclick="calculate()">=</button>
+
+          <button class="key zero" onclick="appendValue('0')">0</button>
+          <button class="key" onclick="appendValue('.')">.</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <script>
-    function appendValue(value) {
-      const display = document.getElementById('display');
-      display.value += value;
-    }
+<script>
+  /* mesma config do index.html */
+  const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
+  const SUPABASE_ANON_KEY = 'SUA_ANON_KEY_AQUI';
+  const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function clearDisplay() {
-      document.getElementById('display').value = '';
+  (async () => {
+    const { data } = await supa.auth.getSession();
+    if(!data.session){
+      document.getElementById('lockMsg').style.display = 'block';
+      document.getElementById('calcContent').style.display = 'none';
     }
+  })();
 
-    function deleteLast() {
-      const display = document.getElementById('display');
-      display.value = display.value.slice(0, -1);
-    }
-
-    function calculate() {
-      const display = document.getElementById('display');
-      try {
-        display.value = eval(display.value);
-      } catch {
+  function appendValue(value){
+    const display = document.getElementById('display');
+    display.value += value;
+  }
+  function clearDisplay(){
+    document.getElementById('display').value = '';
+  }
+  function deleteLast(){
+    const display = document.getElementById('display');
+    display.value = display.value.slice(0, -1);
+  }
+  function calculate(){
+    const display = document.getElementById('display');
+    try{
+      // avalia apenas dígitos e operadores básicos, sem eval genérico
+      if(/^[0-9+\-*/.\s]*$/.test(display.value)){
+        display.value = Function('"use strict";return (' + display.value + ')')();
+      } else {
         display.value = 'Erro';
       }
+    }catch{
+      display.value = 'Erro';
     }
-  </script>
+  }
+</script>
 </body>
 </html>

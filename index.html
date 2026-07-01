@@ -1,464 +1,910 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Controle de Ganhos</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&display=swap" rel="stylesheet">
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: 'Barlow Condensed', sans-serif;
-    }
-    body {
-      margin: 0;
-      padding: 0;
-      background: #1c1c1c;
-      color: #f1f1f1;
-    }
-    header {
-      background-color: #111;
-      padding: 20px;
-      text-align: center;
-      font-size: 24px;
-      color: #f1c40f;
-    }
-    .container {
-      padding: 20px;
-    }
-    input, button, select {
-      padding: 10px;
-      margin: 5px;
-      border: none;
-      border-radius: 8px;
-    }
-    input {
-      width: 150px;
-    }
-    button {
-      background-color: #f1c40f;
-      color: #111;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .gain-list, .month-summary, .historic-container {
-      margin-top: 20px;
-      padding: 10px;
-      background: #2c2c2c;
-      border-radius: 10px;
-    }
-    .gain-item, .month-record {
-      margin: 10px 0;
-    }
-    canvas {
-      margin-top: 20px;
-      background: transparent;
-      border-radius: 10px;
-      max-width: 100%;
-      max-height: 300px;
-      display: block;
-    }
-    footer {
-      text-align: center;
-      margin-top: 40px;
-      padding: 10px;
-      background: #111;
-      color: #aaa;
-    }
-    .tab {
-      display: none;
-    }
-    .tab.active {
-      display: block;
-    }
-    nav {
-      text-align: center;
-      background: #333;
-    }
-    nav button {
-      margin: 5px;
-    }
-    .progress-bar {
-      width: 100%;
-      height: 20px;
-      border-radius: 10px;
-      background-color: #444;
-      overflow: hidden;
-      margin-top: 10px;
-      position: relative;
-    }
-    .progress-fill {
-      height: 100%;
-      transition: width 0.3s ease;
-      text-align: center;
-      line-height: 20px;
-      color: white;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Controle de Ganhos</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<style>
+  :root{
+    --tg-bg:#0E1621;
+    --tg-bg-2:#17212B;
+    --tg-card:#1E2C3A;
+    --tg-card-2:#24374A;
+    --tg-accent:#2AABEE;
+    --tg-accent-2:#229ED9;
+    --tg-gradient:linear-gradient(135deg,#2AABEE,#229ED9);
+    --tg-green:#4FCE5D;
+    --tg-green-bg:rgba(79,206,93,0.14);
+    --tg-red:#F1554C;
+    --tg-red-bg:rgba(241,85,76,0.14);
+    --tg-text:#F5F7FA;
+    --tg-text-dim:#8B98A5;
+    --tg-divider:#243342;
+    --radius:16px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--tg-bg);
+    color:var(--tg-text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+  }
+  #app-shell{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    background:var(--tg-bg);
+    position:relative;
+  }
+
+  /* ---------- AUTH SCREEN ---------- */
+  #authScreen{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:32px 24px;
+    gap:20px;
+  }
+  .auth-logo{
+    width:76px;height:76px;border-radius:50%;
+    background:var(--tg-gradient);
+    display:flex;align-items:center;justify-content:center;
+    font-size:34px;
+    box-shadow:0 8px 24px rgba(42,171,238,0.35);
+  }
+  .auth-title{font-size:22px;font-weight:600;text-align:center;}
+  .auth-sub{color:var(--tg-text-dim);font-size:14px;text-align:center;margin-top:-12px;}
+  .auth-card{width:100%;display:flex;flex-direction:column;gap:12px;}
+  .field{
+    width:100%;
+    background:var(--tg-card);
+    border:1px solid var(--tg-divider);
+    border-radius:12px;
+    padding:14px 16px;
+    color:var(--tg-text);
+    font-size:15px;
+    outline:none;
+    transition:border-color .15s;
+  }
+  .field:focus{border-color:var(--tg-accent);}
+  .btn-primary{
+    width:100%;
+    background:var(--tg-gradient);
+    color:#fff;
+    border:none;
+    border-radius:12px;
+    padding:14px;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    transition:opacity .15s, transform .1s;
+  }
+  .btn-primary:active{transform:scale(0.98);}
+  .btn-primary:disabled{opacity:.55;cursor:default;}
+  .auth-switch{
+    text-align:center;
+    color:var(--tg-accent);
+    font-size:14px;
+    cursor:pointer;
+    margin-top:4px;
+  }
+  .auth-msg{
+    font-size:13px;
+    text-align:center;
+    border-radius:10px;
+    padding:10px 12px;
+    display:none;
+  }
+  .auth-msg.err{display:block;background:var(--tg-red-bg);color:var(--tg-red);}
+  .auth-msg.ok{display:block;background:var(--tg-green-bg);color:var(--tg-green);}
+
+  /* ---------- APP SCREEN ---------- */
+  #appScreen{display:none; flex-direction:column; min-height:100vh;}
+  .topbar{
+    background:var(--tg-gradient);
+    padding:16px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:sticky;top:0;z-index:20;
+  }
+  .topbar-title{font-size:19px;font-weight:700;color:#fff;}
+  .topbar-right{display:flex;align-items:center;gap:10px;}
+  .avatar{
+    width:34px;height:34px;border-radius:50%;
+    background:rgba(255,255,255,0.22);
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:700;color:#fff;
+  }
+  .icon-btn{
+    background:rgba(255,255,255,0.16);
+    border:none;border-radius:50%;
+    width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:15px;cursor:pointer;
+  }
+
+  .tabs{
+    display:flex;
+    gap:6px;
+    background:var(--tg-bg-2);
+    padding:8px;
+    position:sticky;top:66px;z-index:15;
+  }
+  .tab-btn{
+    flex:1;
+    padding:10px;
+    text-align:center;
+    border-radius:10px;
+    background:transparent;
+    color:var(--tg-text-dim);
+    border:none;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .tab-btn.active{background:var(--tg-card-2);color:#fff;}
+
+  main{flex:1;padding:16px 14px 100px;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  .card{
+    background:var(--tg-card);
+    border-radius:var(--radius);
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .card h3{margin:0 0 10px;font-size:14px;color:var(--tg-text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+
+  .meta-row{display:flex;gap:8px;}
+  .meta-row .field{padding:11px 12px;font-size:14px;}
+
+  .progress-bar{
+    width:100%;height:22px;border-radius:11px;
+    background:var(--tg-divider);
+    overflow:hidden;margin-top:12px;position:relative;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,#F1554C,#F1554C);
+    transition:width .4s ease, background .4s ease;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;color:#fff;
+  }
+  .summary-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;
+  }
+  .summary-item{background:var(--tg-bg-2);border-radius:10px;padding:10px 12px;}
+  .summary-item .lbl{font-size:11px;color:var(--tg-text-dim);}
+  .summary-item .val{font-size:15px;font-weight:700;margin-top:2px;}
+
+  .bubble-row{display:flex;margin-bottom:8px;}
+  .bubble-row.out{justify-content:flex-end;}
+  .bubble-row.in{justify-content:flex-start;}
+  .bubble{
+    max-width:82%;
+    padding:10px 12px;
+    font-size:13.5px;
+    position:relative;
+  }
+  .bubble .bmeta{font-size:11px;color:var(--tg-text-dim);margin-top:3px;display:flex;gap:8px;align-items:center;}
+  .bubble .bval{font-size:15px;font-weight:700;}
+  .bubble.gain{
+    background:var(--tg-green-bg);
+    color:var(--tg-text);
+    border-radius:16px 16px 4px 16px;
+    border:1px solid rgba(79,206,93,0.25);
+  }
+  .bubble.gain .bval{color:var(--tg-green);}
+  .bubble.custo{
+    background:var(--tg-red-bg);
+    border-radius:16px 16px 16px 4px;
+    border:1px solid rgba(241,85,76,0.25);
+  }
+  .bubble.custo .bval{color:var(--tg-red);}
+  .del-x{
+    background:none;border:none;color:var(--tg-text-dim);
+    cursor:pointer;font-size:13px;padding:0;margin-left:auto;
+  }
+  .empty-hint{color:var(--tg-text-dim);font-size:13px;text-align:center;padding:18px 6px;}
+
+  canvas{max-width:100%;}
+
+  .month-card{margin-bottom:12px;}
+  .month-card .mh-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .month-card .mh-title{font-weight:700;font-size:15px;}
+  .month-card .mh-total{color:var(--tg-green);font-weight:700;}
+  .month-card details summary{cursor:pointer;color:var(--tg-accent);font-size:13px;list-style:none;}
+  .month-card details summary::-webkit-details-marker{display:none;}
+  .mh-line{font-size:12.5px;color:var(--tg-text-dim);padding:3px 0;border-bottom:1px dashed var(--tg-divider);}
+  .mh-actions{display:flex;gap:8px;margin-top:10px;}
+  .pill-btn{
+    flex:1;background:var(--tg-card-2);color:var(--tg-text);border:none;
+    border-radius:10px;padding:9px;font-size:12.5px;font-weight:600;cursor:pointer;
+  }
+  .pill-btn.danger{background:var(--tg-red-bg);color:var(--tg-red);}
+
+  /* FAB */
+  .fab{
+    position:fixed;
+    bottom:24px;
+    right:calc(50% - 240px + 24px);
+    width:56px;height:56px;border-radius:50%;
+    background:var(--tg-gradient);
+    border:none;color:#fff;font-size:28px;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 20px rgba(42,171,238,0.4);
+    cursor:pointer;z-index:30;
+  }
+  @media (max-width:520px){
+    .fab{right:24px;}
+  }
+
+  /* Bottom sheet */
+  .sheet-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.55);
+    display:none;align-items:flex-end;justify-content:center;z-index:50;
+  }
+  .sheet-overlay.open{display:flex;}
+  .sheet{
+    width:100%;max-width:480px;
+    background:var(--tg-bg-2);
+    border-radius:20px 20px 0 0;
+    padding:10px 18px 24px;
+    max-height:88vh;overflow-y:auto;
+    animation:slideUp .2s ease;
+  }
+  @keyframes slideUp{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .sheet-handle{width:40px;height:4px;background:var(--tg-divider);border-radius:2px;margin:6px auto 14px;}
+  .sheet-tabs{display:flex;gap:6px;background:var(--tg-card);padding:6px;border-radius:12px;margin-bottom:14px;}
+  .sheet-tabs button{flex:1;padding:9px;border:none;border-radius:9px;background:transparent;color:var(--tg-text-dim);font-weight:600;font-size:13.5px;cursor:pointer;}
+  .sheet-tabs button.active{background:var(--tg-card-2);color:#fff;}
+  .sheet-form{display:none;flex-direction:column;gap:10px;}
+  .sheet-form.active{display:flex;}
+
+  .toast{
+    position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
+    background:var(--tg-card-2);color:#fff;padding:10px 18px;border-radius:20px;
+    font-size:13px;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+
+  footer{
+    text-align:center;padding:14px;color:var(--tg-text-dim);font-size:11px;
+  }
+</style>
 </head>
 <body>
-  <header>Controle de Ganhos</header>
-  <nav>
-    <button onclick="changeTab('main')">Principal</button>
-    <button onclick="changeTab('history')">Histórico</button>
-    <button onclick="window.location.href='Calculadora.html'">Calculadora</button>
-  </nav>
-<div class="container tab active" id="gastos">
-  <!-- ganhos + custos -->
-</div>
-<div class="container tab" id="analise">
-  <h2>Análise Financeira</h2>
-  <canvas id="chart"></canvas>
-  <canvas id="pieChart"></canvas>
-</div>
+<div id="app-shell">
 
+  <!-- ===================== TELA DE LOGIN / CADASTRO ===================== -->
+  <div id="authScreen">
+    <div class="auth-logo">💰</div>
+    <div class="auth-title" id="authTitle">Entrar</div>
+    <div class="auth-sub">Controle de Ganhos — seus dados, só seus</div>
 
-  <div class="container tab active" id="main">
-    <input type="number" id="gain" placeholder="Valor ganho" />
-    <input type="date" id="date" />
-    <input type="text" id="gainDesc" placeholder="Descrição do serviço" />
-    <input type="number" id="meta" placeholder="Meta do mês" />
-    <input type="number" id="extraPercent" placeholder="% extra na meta" />
-    <button onclick="addGain()">Adicionar</button>
-    <button onclick="clearGains()">Limpar</button>
-    <button onclick="finalizeMonth()">Finalizar Mês</button>
-    
-    <h3>Adicionar Custo</h3>
-    <input type="text" id="custoCategoria" placeholder="Categoria (Ex: Alimentação)" />
-    <input type="text" id="custoDesc" placeholder="Descrição do custo (opcional)" />
-    <input type="number" id="custo" placeholder="Valor retirado" />
-    <input type="date" id="custoDate" />
-    <input type="text" id="custoDesc" placeholder="Descrição do custo" />
-    <button onclick="addCusto()">Adicionar Custo</button>
-    
-    <div class="gain-list" id="custoList"></div>
-    <div class="gain-list" id="gainList"></div>
-    <div class="month-summary" id="monthSummary"></div>
-    
-    <div class="progress-bar">
-      <div class="progress-fill" id="progressFill">0%</div>
+    <div class="auth-card">
+      <div id="authMsg" class="auth-msg"></div>
+      <input type="email" id="authEmail" class="field" placeholder="E-mail" autocomplete="username" />
+      <input type="password" id="authPassword" class="field" placeholder="Senha" autocomplete="current-password" />
+      <input type="password" id="authPasswordConfirm" class="field" placeholder="Confirmar senha" style="display:none" />
+      <button class="btn-primary" id="authSubmitBtn" onclick="handleAuthSubmit()">Entrar</button>
+      <div class="auth-switch" id="authSwitch" onclick="toggleAuthMode()">Não tem conta? Cadastre-se</div>
+    </div>
+  </div>
+
+  <!-- ===================== APP PRINCIPAL ===================== -->
+  <div id="appScreen">
+    <header class="topbar">
+      <div class="topbar-title">Controle de Ganhos</div>
+      <div class="topbar-right">
+        <div class="avatar" id="userAvatar">?</div>
+        <button class="icon-btn" title="Sair" onclick="handleLogout()">⏻</button>
+        <button class="icon-btn" title="Calculadora" onclick="window.location.href='Calculadora.html'">=</button>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="principal" onclick="changeTab('principal')">Principal</button>
+      <button class="tab-btn" data-tab="historico" onclick="changeTab('historico')">Histórico</button>
+    </nav>
+
+    <main>
+      <!-- ---- TAB PRINCIPAL ---- -->
+      <section class="tab-panel active" id="tab-principal">
+
+        <div class="card">
+          <h3>Meta do ciclo</h3>
+          <div class="meta-row">
+            <input type="number" id="metaInput" class="field" placeholder="Meta (R$)" />
+            <input type="number" id="extraInput" class="field" placeholder="% extra" />
+          </div>
+          <button class="btn-primary" style="margin-top:10px;" onclick="saveMeta()">Salvar meta</button>
+
+          <div class="progress-bar"><div class="progress-fill" id="progressFill">0%</div></div>
+
+          <div class="summary-grid" id="summaryGrid"></div>
+        </div>
+
+        <div class="card">
+          <h3>Evolução</h3>
+          <canvas id="chart" height="180"></canvas>
+        </div>
+
+        <div class="card">
+          <h3>Ganhos</h3>
+          <div id="gainList"></div>
+        </div>
+
+        <div class="card">
+          <h3>Custos</h3>
+          <div id="custoList"></div>
+        </div>
+
+        <button class="btn-primary" onclick="finalizeMonth()">Finalizar mês</button>
+      </section>
+
+      <!-- ---- TAB HISTÓRICO ---- -->
+      <section class="tab-panel" id="tab-historico">
+        <div id="historicContainer"></div>
+      </section>
+    </main>
+
+    <button class="fab" onclick="openSheet()">+</button>
+
+    <div class="sheet-overlay" id="sheetOverlay" onclick="closeSheetOnOverlay(event)">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-tabs">
+          <button id="sheetTabGain" class="active" onclick="switchSheetTab('gain')">Novo ganho</button>
+          <button id="sheetTabCusto" onclick="switchSheetTab('custo')">Novo custo</button>
+        </div>
+
+        <div class="sheet-form active" id="formGain">
+          <input type="number" id="gainValue" class="field" placeholder="Valor ganho (R$)" />
+          <input type="date" id="gainDate" class="field" />
+          <input type="text" id="gainDesc" class="field" placeholder="Descrição do serviço" />
+          <button class="btn-primary" onclick="addGain()">Adicionar ganho</button>
+        </div>
+
+        <div class="sheet-form" id="formCusto">
+          <input type="text" id="custoCategoria" class="field" placeholder="Categoria (ex: Alimentação)" />
+          <input type="number" id="custoValue" class="field" placeholder="Valor retirado (R$)" />
+          <input type="date" id="custoDate" class="field" />
+          <input type="text" id="custoDescricao" class="field" placeholder="Descrição do custo (opcional)" />
+          <button class="btn-primary" onclick="addCusto()">Adicionar custo</button>
+        </div>
+      </div>
     </div>
 
-    <canvas id="chart"></canvas>
+    <div class="toast" id="toast"></div>
+
+    <footer>Desenvolvido por: Ronaldo Silva Dos Santos — 73 99116-1995</footer>
   </div>
+</div>
 
-  <div class="container tab" id="history">
-    <div class="historic-container" id="historicContainer"></div>
-  </div>
+<script>
+/* ============================================================
+   CONFIGURAÇÃO DO SUPABASE
+   Troque pelos dados do SEU projeto (Project Settings > API).
+   Use a chave "anon public" (o JWT que começa com "eyJ...").
+   ============================================================ */
+const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
+const SUPABASE_ANON_KEY = 'SUA_ANON_KEY_AQUI';
 
-  <footer>Desenvolvido Por: Ronaldo Silva Dos Santos - 73 99116-1995</footer>
+const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  <script>
-  const gainList = JSON.parse(localStorage.getItem('gainList')) || [];
-  const custoList = JSON.parse(localStorage.getItem('custoList')) || [];
-  const monthHistory = JSON.parse(localStorage.getItem('monthHistory')) || [];
+let currentUser = null;
+let isSignupMode = false;
 
-  function saveData() {
-    localStorage.setItem('gainList', JSON.stringify(gainList));
-    localStorage.setItem('custoList', JSON.stringify(custoList));
-    localStorage.setItem('monthHistory', JSON.stringify(monthHistory));
-  }
+let gainList = [];
+let custoList = [];
+let monthHistory = [];
+let currentMeta = 0;
+let currentExtra = 0;
 
-  function changeTab(tab) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.getElementById(tab).classList.add('active');
-    if (tab === 'history') renderHistory();
-  }
+/* ---------------- TOAST ---------------- */
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
 
-  function addGain() {
-    const gain = parseFloat(document.getElementById('gain').value);
-    const date = document.getElementById('date').value;
-    const desc = document.getElementById('gainDesc').value;
-    const meta = parseFloat(document.getElementById('meta').value);
-    const extra = parseFloat(document.getElementById('extraPercent').value || 0);
+/* ---------------- AUTH UI ---------------- */
+function toggleAuthMode(){
+  isSignupMode = !isSignupMode;
+  document.getElementById('authTitle').textContent = isSignupMode ? 'Criar conta' : 'Entrar';
+  document.getElementById('authSubmitBtn').textContent = isSignupMode ? 'Cadastrar' : 'Entrar';
+  document.getElementById('authPasswordConfirm').style.display = isSignupMode ? 'block' : 'none';
+  document.getElementById('authSwitch').textContent = isSignupMode ? 'Já tem conta? Entrar' : 'Não tem conta? Cadastre-se';
+  showAuthMsg('');
+}
 
-    if (!gain || !date || !meta || !desc) 
-      return alert('Preencha todos os campos, incluindo a descrição.');
+function showAuthMsg(msg, type){
+  const el = document.getElementById('authMsg');
+  el.className = 'auth-msg' + (type ? ' ' + type : '');
+  el.textContent = msg;
+}
 
-    const realMeta = meta + (meta * (extra / 100));
-    gainList.push({ gain, date, desc, meta: realMeta });
+async function handleAuthSubmit(){
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const btn = document.getElementById('authSubmitBtn');
 
-    saveData();
-    renderGains();
+  if(!email || !password) return showAuthMsg('Preencha e-mail e senha.', 'err');
 
-    document.getElementById('gain').value = '';
-    document.getElementById('gainDesc').value = '';
-  }
+  if(isSignupMode){
+    const confirm = document.getElementById('authPasswordConfirm').value;
+    if(password !== confirm) return showAuthMsg('As senhas não coincidem.', 'err');
+    if(password.length < 6) return showAuthMsg('A senha precisa ter pelo menos 6 caracteres.', 'err');
 
-  function deleteGain(index) {
-    if (confirm('Deseja remover este dia?')) {
-      gainList.splice(index, 1);
-      saveData();
-      renderGains();
+    btn.disabled = true;
+    const { data, error } = await supa.auth.signUp({ email, password });
+    btn.disabled = false;
+
+    if(error) return showAuthMsg(error.message, 'err');
+
+    if(data.session){
+      showAuthMsg('Conta criada! Entrando...', 'ok');
+      await onLoginSuccess(data.session.user);
+    } else {
+      showAuthMsg('Conta criada! Verifique seu e-mail para confirmar antes de entrar.', 'ok');
     }
-  }
+  } else {
+    btn.disabled = true;
+    const { data, error } = await supa.auth.signInWithPassword({ email, password });
+    btn.disabled = false;
 
-  function clearGains() {
-    if (confirm("Tem certeza que deseja apagar todos os dados?")) {
-      gainList.length = 0;
-      custoList.length = 0;
-      saveData();
-      renderGains();
-      renderCustos();
+    if(error) return showAuthMsg(error.message, 'err');
+    await onLoginSuccess(data.user);
+  }
+}
+
+async function handleLogout(){
+  await supa.auth.signOut();
+  currentUser = null;
+  gainList = []; custoList = []; monthHistory = [];
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('authEmail').value = '';
+  document.getElementById('authPassword').value = '';
+}
+
+async function onLoginSuccess(user){
+  currentUser = user;
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'flex';
+  const initial = (user.email || '?').charAt(0).toUpperCase();
+  document.getElementById('userAvatar').textContent = initial;
+
+  loadLocalMeta();
+  await Promise.all([loadGains(), loadCustos(), loadHistory()]);
+  renderAll();
+}
+
+/* checa se já existe sessão ativa ao abrir a página */
+async function checkSession(){
+  const { data } = await supa.auth.getSession();
+  if(data.session && data.session.user){
+    await onLoginSuccess(data.session.user);
+  }
+}
+
+/* ---------------- META (guardada localmente por usuário) ---------------- */
+function metaStorageKey(){ return 'meta_' + (currentUser ? currentUser.id : 'anon'); }
+
+function loadLocalMeta(){
+  try{
+    const raw = localStorage.getItem(metaStorageKey());
+    if(raw){
+      const m = JSON.parse(raw);
+      currentMeta = m.meta || 0;
+      currentExtra = m.extra || 0;
+    } else {
+      currentMeta = 0; currentExtra = 0;
     }
-  }
+  }catch(e){ currentMeta = 0; currentExtra = 0; }
+  document.getElementById('metaInput').value = currentMeta || '';
+  document.getElementById('extraInput').value = currentExtra || '';
+}
 
-  function finalizeMonth() {
-    const month = prompt('Digite o nome do mês:');
-    if (!month) return;
-    monthHistory.push({ month, data: [...gainList], custos: [...custoList] });
-    gainList.length = 0;
-    custoList.length = 0;
-    saveData();
-    renderGains();
-    renderCustos();
-    alert('Mês finalizado e salvo no histórico.');
-  }
+function saveMeta(){
+  currentMeta = parseFloat(document.getElementById('metaInput').value) || 0;
+  currentExtra = parseFloat(document.getElementById('extraInput').value) || 0;
+  localStorage.setItem(metaStorageKey(), JSON.stringify({meta: currentMeta, extra: currentExtra}));
+  toast('Meta salva.');
+  renderGains();
+}
 
-  function addCusto() {
-    const valor = parseFloat(document.getElementById('custo').value);
-    const data = document.getElementById('custoDate').value;
-    const descricao = document.getElementById('custoDesc').value;
-     function addCusto() {
-  const valor = parseFloat(document.getElementById('custo').value);
+function getRealMeta(){
+  return currentMeta + (currentMeta * (currentExtra/100));
+}
+
+/* ---------------- TABS ---------------- */
+function changeTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.getElementById('tab-principal').classList.toggle('active', tab==='principal');
+  document.getElementById('tab-historico').classList.toggle('active', tab==='historico');
+  if(tab==='historico') renderHistory();
+}
+
+/* ---------------- BOTTOM SHEET ---------------- */
+function openSheet(){
+  document.getElementById('gainDate').valueAsDate = new Date();
+  document.getElementById('custoDate').valueAsDate = new Date();
+  document.getElementById('sheetOverlay').classList.add('open');
+}
+function closeSheet(){
+  document.getElementById('sheetOverlay').classList.remove('open');
+}
+function closeSheetOnOverlay(e){
+  if(e.target.id === 'sheetOverlay') closeSheet();
+}
+function switchSheetTab(which){
+  document.getElementById('sheetTabGain').classList.toggle('active', which==='gain');
+  document.getElementById('sheetTabCusto').classList.toggle('active', which==='custo');
+  document.getElementById('formGain').classList.toggle('active', which==='gain');
+  document.getElementById('formCusto').classList.toggle('active', which==='custo');
+}
+
+/* ---------------- DATA: GANHOS ---------------- */
+async function loadGains(){
+  const { data, error } = await supa.from('gains').select('*').order('date', {ascending:true});
+  if(error){ console.error(error); toast('Erro ao carregar ganhos.'); return; }
+  gainList = data || [];
+}
+
+async function addGain(){
+  const gain = parseFloat(document.getElementById('gainValue').value);
+  const date = document.getElementById('gainDate').value;
+  const desc = document.getElementById('gainDesc').value.trim();
+
+  if(!gain || !date || !desc) return toast('Preencha todos os campos do ganho.');
+
+  const { data, error } = await supa.from('gains').insert({
+    user_id: currentUser.id,
+    gain, date, descricao: desc,
+    meta: getRealMeta()
+  }).select().single();
+
+  if(error){ console.error(error); return toast('Erro ao salvar ganho.'); }
+
+  gainList.push(data);
+  gainList.sort((a,b)=> a.date.localeCompare(b.date));
+  document.getElementById('gainValue').value = '';
+  document.getElementById('gainDesc').value = '';
+  closeSheet();
+  renderGains();
+  toast('Ganho adicionado.');
+}
+
+async function deleteGain(id){
+  if(!confirm('Remover este ganho?')) return;
+  const { error } = await supa.from('gains').delete().eq('id', id);
+  if(error){ console.error(error); return toast('Erro ao remover.'); }
+  gainList = gainList.filter(g=>g.id!==id);
+  renderGains();
+}
+
+/* ---------------- DATA: CUSTOS ---------------- */
+async function loadCustos(){
+  const { data, error } = await supa.from('custos').select('*').order('data', {ascending:true});
+  if(error){ console.error(error); toast('Erro ao carregar custos.'); return; }
+  custoList = data || [];
+}
+
+async function addCusto(){
+  const valor = parseFloat(document.getElementById('custoValue').value);
   const data = document.getElementById('custoDate').value;
-  const categoria = document.getElementById('custoCategoria').value;
-  const descricao = document.getElementById('custoDesc').value;
+  const categoria = document.getElementById('custoCategoria').value.trim();
+  const descricao = document.getElementById('custoDescricao').value.trim();
 
-  if (!valor || !data || !categoria) {
-    return alert('Preencha valor, data e categoria.');
-  }
+  if(!valor || !data || !categoria) return toast('Preencha valor, data e categoria.');
 
-  custoList.push({ valor, data, categoria, descricao });
-  saveData();
+  const { data: row, error } = await supa.from('custos').insert({
+    user_id: currentUser.id,
+    valor, data, categoria, descricao
+  }).select().single();
+
+  if(error){ console.error(error); return toast('Erro ao salvar custo.'); }
+
+  custoList.push(row);
+  custoList.sort((a,b)=> a.data.localeCompare(b.data));
+  document.getElementById('custoValue').value = '';
+  document.getElementById('custoCategoria').value = '';
+  document.getElementById('custoDescricao').value = '';
+  closeSheet();
+  renderCustos();
+  renderGains();
+  toast('Custo adicionado.');
+}
+
+async function deleteCusto(id){
+  if(!confirm('Remover este custo?')) return;
+  const { error } = await supa.from('custos').delete().eq('id', id);
+  if(error){ console.error(error); return toast('Erro ao remover.'); }
+  custoList = custoList.filter(c=>c.id!==id);
   renderCustos();
   renderGains();
 }
 
-    if (!valor || !data || !descricao) 
-      return alert('Preencha todos os campos de custo.');
+/* ---------------- FINALIZAR MÊS / HISTÓRICO ---------------- */
+async function finalizeMonth(){
+  if(gainList.length === 0 && custoList.length === 0) return toast('Nada para finalizar ainda.');
+  const month = prompt('Digite o nome do mês (ex: Junho/2026):');
+  if(!month) return;
 
-    custoList.push({ valor, data, descricao });
-    saveData();
-    renderCustos();
-    renderGains();
-  }
+  const { error: histError } = await supa.from('month_history').insert({
+    user_id: currentUser.id,
+    month,
+    gains: gainList,
+    custos: custoList
+  });
+  if(histError){ console.error(histError); return toast('Erro ao salvar histórico.'); }
 
-  function deleteCusto(index) {
-    if (confirm("Deseja remover este custo?")) {
-      custoList.splice(index, 1);
-      saveData();
-      renderCustos();
-      renderGains();
-    }
-  }
+  const gainIds = gainList.map(g=>g.id);
+  const custoIds = custoList.map(c=>c.id);
+  if(gainIds.length) await supa.from('gains').delete().in('id', gainIds);
+  if(custoIds.length) await supa.from('custos').delete().in('id', custoIds);
 
-  function renderCustos() {
-    const container = document.getElementById('custoList');
-    container.innerHTML = '<h3>Custos</h3>';
-    let totalCustos = 0;
-
-    custoList.forEach(({ valor, data, descricao }, index) => {
-      totalCustos += valor;
-      const div = document.createElement('div');
-      div.className = 'gain-item';
-      div.innerHTML = `${data} - R$${valor.toFixed(2)} - ${descricao} 
-        <button onclick="deleteCusto(${index})">Excluir</button>`;
-      container.appendChild(div);
-    });
-
-    if (custoList.length > 0) {
-      const totalDiv = document.createElement('div');
-      totalDiv.style.marginTop = '10px';
-      totalDiv.innerHTML = `<strong>Total de Custos: R$${totalCustos.toFixed(2)}</strong>`;
-      container.appendChild(totalDiv);
-    }
-  }
-
-  function renderGains() {
-    const container = document.getElementById('gainList');
-    container.innerHTML = '<h3>Ganhos</h3>';
-    let total = 0;
-
-    gainList.forEach(({ gain, date, desc }, index) => {
-      total += gain;
-      const div = document.createElement('div');
-      div.className = 'gain-item';
-      div.innerHTML = `${date} - R$${gain.toFixed(2)} - ${desc}
-        <button onclick="deleteGain(${index})">Excluir</button>`;
-      container.appendChild(div);
-    });
-
-    const totalCustos = custoList.reduce((sum, c) => sum + c.valor, 0);
-    const totalLiquido = total - totalCustos;
-
-    const meta = gainList[0]?.meta || 0;
-    const falta = meta - totalLiquido;
-    const porcentagem = meta ? ((totalLiquido / meta) * 100) : 0;
-    const porcentagemFaltante = 100 - porcentagem;
-    const media = gainList.length ? totalLiquido / gainList.length : 0;
-
-    document.getElementById('monthSummary').innerText =
-      `Meta: R$${meta.toFixed(2)} | Atingido: R$${totalLiquido.toFixed(2)} | Falta: R$${falta.toFixed(2)} | ` +
-      `Faltam ${porcentagemFaltante.toFixed(1)}% | Média diária líquida: R$${media.toFixed(2)}`;
-
-    const progress = document.getElementById('progressFill');
-    const progressPercentage = Math.min(porcentagem, 100);
-    progress.style.width = `${progressPercentage}%`;
-
-    if (progressPercentage < 50) {
-      progress.style.background = `linear-gradient(90deg, red, orange)`;
-    } else if (progressPercentage < 100) {
-      progress.style.background = `linear-gradient(90deg, yellow, orange)`;
-    } else {
-      progress.style.background = `linear-gradient(90deg, green, limegreen)`;
-    }
-
-    progress.innerText = `${progressPercentage.toFixed(1)}%`;
-
-    if (porcentagem >= 100) confetti();
-    renderChart(gainList);
-  }
-  function renderChart(data) {
-    const ctx = document.getElementById('chart').getContext('2d');
-    if (window.myChart) window.myChart.destroy();
-
-    let acumulado = 0;
-    const acumuladoData = data.map(d => acumulado += d.gain);
-
-    window.myChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: data.map(d => d.date),
-        datasets: [
-          {
-            label: 'Ganhos Diários',
-            data: data.map(d => d.gain),
-            backgroundColor: '#f1c40f',
-            borderColor: '#e67e22',
-            borderWidth: 2,
-          },
-          {
-            type: 'line',
-            label: 'Evolução',
-            data: acumuladoData,
-            borderColor: '#2ecc71',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.1
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true
-          }
-        }
-      }
-    });
-  }
-
-  function renderHistory() {
-    const container = document.getElementById('historicContainer');
-    container.innerHTML = '';
-
-    monthHistory.forEach((month, idx) => {
-      const totalGanhos = month.data.reduce((sum, g) => sum + g.gain, 0);
-      const totalCustos = (month.custos || []).reduce((sum, c) => sum + c.valor, 0);
-      const totalLiquido = totalGanhos - totalCustos;
-
-      const div = document.createElement('div');
-      div.className = 'month-record';
-      div.innerHTML = `<strong>${month.month}</strong><br>` +
-        month.data.map(g => `${g.date} - R$${g.gain.toFixed(2)} - ${g.desc}`).join('<br>') +
-        `<br><em>Custos:</em><br>` +
-        (month.custos || []).map(c => `${c.data} - R$${c.valor.toFixed(2)} - ${c.descricao}`).join('<br>') +
-        `<br><strong>Total Líquido: R$${totalLiquido.toFixed(2)}</strong><br>` +
-        `<button onclick="exportPDF(${idx})">Exportar PDF</button> ` +
-        `<button onclick="exportExcel(${idx})">Exportar Excel</button> ` +
-        `<button onclick="deleteHistory(${idx})">Excluir</button>`;
-      container.appendChild(div);
-    });
-  }
-
-  function deleteHistory(index) {
-    if (confirm("Deseja excluir este histórico?")) {
-      monthHistory.splice(index, 1);
-      saveData();
-      renderHistory();
-    }
-  }
-
-  function exportPDF(index) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const month = monthHistory[index];
-    let y = 10;
-
-    doc.text(`Resumo do mês: ${month.month}`, 10, y);
-    y += 10;
-
-    month.data.forEach(g => {
-      doc.text(`${g.date} - R$${g.gain.toFixed(2)} - ${g.desc}`, 10, y);
-      y += 10;
-    });
-
-    if (month.custos?.length) {
-      y += 10;
-      doc.text('Custos:', 10, y);
-      y += 10;
-      month.custos.forEach(c => {
-        doc.text(`${c.data} - R$${c.valor.toFixed(2)} - ${c.descricao}`, 10, y);
-        y += 10;
-      });
-    }
-
-    const totalGanhos = month.data.reduce((sum, g) => sum + g.gain, 0);
-    const totalCustos = (month.custos || []).reduce((sum, c) => sum + c.valor, 0);
-    const totalLiquido = totalGanhos - totalCustos;
-
-    y += 10;
-    doc.text(`Total Líquido: R$${totalLiquido.toFixed(2)}`, 10, y);
-    doc.save(`${month.month}.pdf`);
-  }
-
-  function exportExcel(index) {
-    const month = monthHistory[index];
-
-    const ganhos = month.data.map(g => ({
-      Tipo: 'Ganho',
-      Data: g.date,
-      Valor: g.gain,
-      Descricao: g.desc
-    }));
-
-    const custos = (month.custos || []).map(c => ({
-      Tipo: 'Custo',
-      Data: c.data,
-      Valor: c.valor,
-      Descricao: c.descricao
-    }));
-
-    const data = [...ganhos, ...custos];
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Resumo");
-    XLSX.writeFile(workbook, `${month.month}.xlsx`);
-  }
-
+  gainList = [];
+  custoList = [];
   renderGains();
   renderCustos();
-  </script>
+  await loadHistory();
+  toast('Mês finalizado e salvo no histórico.');
+}
+
+async function loadHistory(){
+  const { data, error } = await supa.from('month_history').select('*').order('created_at', {ascending:false});
+  if(error){ console.error(error); return; }
+  monthHistory = data || [];
+}
+
+async function deleteHistory(id){
+  if(!confirm('Excluir este histórico?')) return;
+  const { error } = await supa.from('month_history').delete().eq('id', id);
+  if(error){ console.error(error); return toast('Erro ao excluir.'); }
+  monthHistory = monthHistory.filter(m=>m.id!==id);
+  renderHistory();
+}
+
+/* ---------------- RENDER ---------------- */
+function renderAll(){
+  renderGains();
+  renderCustos();
+}
+
+function renderGains(){
+  const container = document.getElementById('gainList');
+  container.innerHTML = '';
+  let total = 0;
+
+  if(gainList.length===0){
+    container.innerHTML = '<div class="empty-hint">Nenhum ganho lançado ainda. Toque no + para adicionar.</div>';
+  }
+
+  gainList.forEach(({id, gain, date, descricao})=>{
+    total += Number(gain);
+    const row = document.createElement('div');
+    row.className = 'bubble-row out';
+    row.innerHTML = `
+      <div class="bubble gain">
+        <div class="bval">R$ ${Number(gain).toFixed(2)}</div>
+        <div>${descricao}</div>
+        <div class="bmeta">
+          <span>${formatDate(date)}</span>
+          <button class="del-x" onclick="deleteGain('${id}')">excluir</button>
+        </div>
+      </div>`;
+    container.appendChild(row);
+  });
+
+  const totalCustos = custoList.reduce((s,c)=>s+Number(c.valor),0);
+  const totalLiquido = total - totalCustos;
+  const meta = getRealMeta();
+  const falta = meta - totalLiquido;
+  const porcentagem = meta ? ((totalLiquido/meta)*100) : 0;
+  const porcentagemFaltante = 100 - porcentagem;
+  const media = gainList.length ? totalLiquido/gainList.length : 0;
+
+  const summary = document.getElementById('summaryGrid');
+  summary.innerHTML = `
+    <div class="summary-item"><div class="lbl">Meta</div><div class="val">R$ ${meta.toFixed(2)}</div></div>
+    <div class="summary-item"><div class="lbl">Atingido (líquido)</div><div class="val">R$ ${totalLiquido.toFixed(2)}</div></div>
+    <div class="summary-item"><div class="lbl">Falta</div><div class="val">R$ ${falta.toFixed(2)}</div></div>
+    <div class="summary-item"><div class="lbl">Média diária</div><div class="val">R$ ${media.toFixed(2)}</div></div>
+  `;
+
+  const progress = document.getElementById('progressFill');
+  const pct = Math.max(0, Math.min(porcentagem, 100));
+  progress.style.width = pct + '%';
+  if(pct < 50){ progress.style.background = 'linear-gradient(90deg,#F1554C,#F09819)'; }
+  else if(pct < 100){ progress.style.background = 'linear-gradient(90deg,#F09819,#FFD500)'; }
+  else { progress.style.background = 'linear-gradient(90deg,#4FCE5D,#2ECC71)'; }
+  progress.textContent = pct.toFixed(1) + '%';
+
+  if(porcentagem >= 100 && meta > 0) confetti();
+
+  renderChart(gainList);
+}
+
+function renderCustos(){
+  const container = document.getElementById('custoList');
+  container.innerHTML = '';
+  let totalCustos = 0;
+
+  if(custoList.length===0){
+    container.innerHTML = '<div class="empty-hint">Nenhum custo lançado ainda.</div>';
+    return;
+  }
+
+  custoList.forEach(({id, valor, data, categoria, descricao})=>{
+    totalCustos += Number(valor);
+    const row = document.createElement('div');
+    row.className = 'bubble-row in';
+    row.innerHTML = `
+      <div class="bubble custo">
+        <div class="bval">R$ ${Number(valor).toFixed(2)}</div>
+        <div>${categoria}${descricao ? ' · ' + descricao : ''}</div>
+        <div class="bmeta">
+          <span>${formatDate(data)}</span>
+          <button class="del-x" onclick="deleteCusto('${id}')">excluir</button>
+        </div>
+      </div>`;
+    container.appendChild(row);
+  });
+
+  const totalDiv = document.createElement('div');
+  totalDiv.style.cssText = 'text-align:right;font-size:12.5px;color:var(--tg-text-dim);margin-top:6px;';
+  totalDiv.innerHTML = `Total de custos: <strong style="color:var(--tg-red)">R$ ${totalCustos.toFixed(2)}</strong>`;
+  container.appendChild(totalDiv);
+}
+
+let chartInstance = null;
+function renderChart(data){
+  const ctx = document.getElementById('chart').getContext('2d');
+  if(chartInstance) chartInstance.destroy();
+
+  let acumulado = 0;
+  const acumuladoData = data.map(d => acumulado += Number(d.gain));
+
+  chartInstance = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: data.map(d=>formatDate(d.date)),
+      datasets:[
+        { label:'Ganhos diários', data:data.map(d=>Number(d.gain)), backgroundColor:'#2AABEE', borderRadius:6 },
+        { type:'line', label:'Evolução', data:acumuladoData, borderColor:'#4FCE5D', borderWidth:2, tension:0.3, fill:false }
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{ legend:{ labels:{ color:'#F5F7FA' } } },
+      scales:{
+        x:{ ticks:{ color:'#8B98A5' }, grid:{ color:'#243342' } },
+        y:{ beginAtZero:true, ticks:{ color:'#8B98A5' }, grid:{ color:'#243342' } }
+      }
+    }
+  });
+}
+
+function renderHistory(){
+  const container = document.getElementById('historicContainer');
+  container.innerHTML = '';
+
+  if(monthHistory.length===0){
+    container.innerHTML = '<div class="empty-hint">Nenhum mês finalizado ainda.</div>';
+    return;
+  }
+
+  monthHistory.forEach((month)=>{
+    const gains = month.gains || [];
+    const custos = month.custos || [];
+    const totalGanhos = gains.reduce((s,g)=>s+Number(g.gain),0);
+    const totalCustos = custos.reduce((s,c)=>s+Number(c.valor),0);
+    const totalLiquido = totalGanhos - totalCustos;
+
+    const div = document.createElement('div');
+    div.className = 'card month-card';
+    div.innerHTML = `
+      <div class="mh-head">
+        <div class="mh-title">${month.month}</div>
+        <div class="mh-total">R$ ${totalLiquido.toFixed(2)}</div>
+      </div>
+      <details>
+        <summary>Ver detalhes</summary>
+        <div style="margin-top:8px;">
+          <strong style="font-size:12px;color:var(--tg-text-dim);">Ganhos</strong>
+          ${gains.map(g=>`<div class="mh-line">${formatDate(g.date)} · R$ ${Number(g.gain).toFixed(2)} · ${g.descricao||g.desc||''}</div>`).join('') || '<div class="mh-line">Nenhum</div>'}
+          <strong style="font-size:12px;color:var(--tg-text-dim);display:block;margin-top:8px;">Custos</strong>
+          ${custos.map(c=>`<div class="mh-line">${formatDate(c.data)} · R$ ${Number(c.valor).toFixed(2)} · ${c.categoria||''}${c.descricao?(' - '+c.descricao):''}</div>`).join('') || '<div class="mh-line">Nenhum</div>'}
+        </div>
+      </details>
+      <div class="mh-actions">
+        <button class="pill-btn" onclick='exportPDF(${JSON.stringify(month.id)})'>PDF</button>
+        <button class="pill-btn" onclick='exportExcel(${JSON.stringify(month.id)})'>Excel</button>
+        <button class="pill-btn danger" onclick="deleteHistory('${month.id}')">Excluir</button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function formatDate(d){
+  if(!d) return '';
+  const parts = d.split('-');
+  if(parts.length===3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return d;
+}
+
+/* ---------------- EXPORTAÇÃO ---------------- */
+function findMonth(id){ return monthHistory.find(m=>m.id===id); }
+
+function exportPDF(id){
+  const month = findMonth(id);
+  if(!month) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 12;
+
+  doc.setFontSize(14);
+  doc.text(`Resumo do mês: ${month.month}`, 10, y); y+=10;
+  doc.setFontSize(11);
+
+  (month.gains||[]).forEach(g=>{
+    doc.text(`${formatDate(g.date)} - R$${Number(g.gain).toFixed(2)} - ${g.descricao||g.desc||''}`, 10, y);
+    y += 8;
+  });
+
+  if((month.custos||[]).length){
+    y += 6;
+    doc.text('Custos:', 10, y); y += 8;
+    month.custos.forEach(c=>{
+      doc.text(`${formatDate(c.data)} - R$${Number(c.valor).toFixed(2)} - ${c.categoria||''} ${c.descricao||''}`, 10, y);
+      y += 8;
+    });
+  }
+
+  const totalGanhos = (month.gains||[]).reduce((s,g)=>s+Number(g.gain),0);
+  const totalCustos = (month.custos||[]).reduce((s,c)=>s+Number(c.valor),0);
+  y += 8;
+  doc.setFontSize(12);
+  doc.text(`Total Líquido: R$${(totalGanhos-totalCustos).toFixed(2)}`, 10, y);
+  doc.save(`${month.month}.pdf`);
+}
+
+function exportExcel(id){
+  const month = findMonth(id);
+  if(!month) return;
+
+  const ganhos = (month.gains||[]).map(g=>({ Tipo:'Ganho', Data:formatDate(g.date), Valor:Number(g.gain), Descricao:g.descricao||g.desc||'' }));
+  const custos = (month.custos||[]).map(c=>({ Tipo:'Custo', Data:formatDate(c.data), Valor:Number(c.valor), Categoria:c.categoria||'', Descricao:c.descricao||'' }));
+
+  const worksheet = XLSX.utils.json_to_sheet([...ganhos, ...custos]);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Resumo");
+  XLSX.writeFile(workbook, `${month.month}.xlsx`);
+}
+
+/* ---------------- START ---------------- */
+checkSession();
+</script>
 </body>
 </html>
